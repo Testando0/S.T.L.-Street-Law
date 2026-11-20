@@ -69,6 +69,7 @@ export class PedestrianSystem {
   private candidates: number[] = [];
   private renderSet = new Set<number>();
   private frame = 0;
+  private renderCap = RENDER_CAP;
 
   constructor(scene: THREE.Scene, world: World, quality: QualityName) {
     this.scene = scene;
@@ -76,6 +77,7 @@ export class PedestrianSystem {
     const p = QUALITY[quality];
     this.activeCount = p.maxNPCs ?? p.people;
     this.maxNPCs = p.maxNPCs ?? p.people;
+    this.renderCap = quality === "low" ? 2 : RENDER_CAP;
     this.useContact = p.useBlobShadows ?? !p.shadows;
   }
 
@@ -88,6 +90,7 @@ export class PedestrianSystem {
     const p = QUALITY[quality];
     this.activeCount = p.maxNPCs ?? p.people;
     this.maxNPCs = p.maxNPCs ?? p.people;
+    this.renderCap = quality === "low" ? 2 : RENDER_CAP;
     this.useContact = p.useBlobShadows ?? !p.shadows;
     while (this.pool.length > this.activeCount) {
       const p = this.pool.pop()!;
@@ -213,7 +216,7 @@ export class PedestrianSystem {
     candidates.sort((a, b) => dists[a]! - dists[b]!);
     const renderSet = this.renderSet;
     renderSet.clear();
-    const renderCount = Math.min(RENDER_CAP, candidates.length);
+    const renderCount = Math.min(this.renderCap, candidates.length);
     for (let i = 0; i < renderCount; i++) renderSet.add(candidates[i]!);
 
     for (let i = 0; i < this.pool.length; i++) {
@@ -246,6 +249,8 @@ export class PedestrianSystem {
 
       this.setRendered(p, renderSet.has(i));
       if (!p.rendered) continue;
+
+      if (this.maxNPCs <= 3 && dist > 24 * 24 && ((this.frame + i) & 1) !== 0) continue;
 
       if (p.downed) {
         p.downTimer -= dt;
