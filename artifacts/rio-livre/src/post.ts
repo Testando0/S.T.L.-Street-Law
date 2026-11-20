@@ -100,17 +100,17 @@ export class PostPipeline {
     this.composer.addPass(new RenderPass(scene, camera));
     this.gtao = new GTAOPass(scene, camera, 512, 512);
     this.gtao.updateGtaoMaterial({
-      radius: 0.42,
+      radius: 0.3,
       distanceExponent: 1,
       thickness: 1,
       scale: 1,
-      samples: 12,
+      samples: 8,
       screenSpaceRadius: false,
     });
-    this.gtao.blendIntensity = 0.9;
+    this.gtao.blendIntensity = 0.55;
     this.gtaoWrap = new SpriteHiddenPass(this.gtao, scene);
     this.composer.addPass(this.gtaoWrap);
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.42, 0.62, 0.82);
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.2, 0.45, 1.5);
     this.composer.addPass(this.bloom);
     this.composer.addPass(new OutputPass());
     this.grade = new ShaderPass(gradeShader);

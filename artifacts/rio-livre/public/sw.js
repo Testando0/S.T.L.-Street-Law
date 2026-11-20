@@ -1,4 +1,4 @@
-const CACHE = "redrp-ghostcity-v8";
+const CACHE = "redrp-ghostcity-v9";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));

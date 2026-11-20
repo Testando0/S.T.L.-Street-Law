@@ -174,9 +174,9 @@ export class Game {
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = preset.name === "high" ? 1.16 : preset.name === "medium" ? 1.12 : 1.05;
+    this.renderer.toneMappingExposure = preset.name === "high" ? 1.0 : preset.name === "medium" ? 1.12 : 1.05;
     this.renderer.setClearColor(preset.fogColor);
-    this.camera.far = preset.name === "low" ? preset.cullingDistance : preset.drawDistance + 120;
+    this.camera.far = preset.name === "low" ? preset.drawDistance + 70 : preset.drawDistance + 120;
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
     // O pipeline de post so nasce quando o preset pede. No modo leve isso
@@ -305,7 +305,7 @@ export class Game {
     this.basePixelRatio = Math.min(window.devicePixelRatio || 1, preset.pixelRatio);
     this.applyRenderScale();
     this.camera.aspect = window.innerWidth / window.innerHeight;
-    this.camera.far = preset.name === "low" ? preset.cullingDistance : preset.drawDistance + 120;
+    this.camera.far = preset.name === "low" ? preset.drawDistance + 70 : preset.drawDistance + 120;
     this.camera.updateProjectionMatrix();
   }
 
@@ -1905,7 +1905,7 @@ export class Game {
       this.renderer.shadowMap.type = THREE.PCFShadowMap;
       this.renderer.shadowMap.needsUpdate = true;
       this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      this.renderer.toneMappingExposure = preset.name === "high" ? 1.16 : preset.name === "medium" ? 1.12 : 1.05;
+      this.renderer.toneMappingExposure = preset.name === "high" ? 1.0 : preset.name === "medium" ? 1.12 : 1.05;
       this.renderer.setClearColor(preset.fogColor);
       this.resize();
     }

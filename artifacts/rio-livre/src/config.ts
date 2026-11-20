@@ -1,4 +1,4 @@
-export const GAME_VERSION = "1.7.0";
+export const GAME_VERSION = "1.7.1";
 export const GAME_NAME = "RedRP";
 export const WORLD_SIZE = 520;
 export const CITY_LIMIT = 178;
@@ -73,7 +73,7 @@ export const QUALITY: Record<QualityName, QualityPreset> = {
   low: {
     name: "low",
     label: "Leve · A14 4 GB",
-    pixelRatio: 1,
+    pixelRatio: 1.2,
     antialias: true,
     shadows: false,
     shadowSize: 256,
@@ -90,12 +90,12 @@ export const QUALITY: Record<QualityName, QualityPreset> = {
     grama: false,
     tremor: false,
     oceanPhysical: false,
-    targetFPS: 40,
+    targetFPS: 30,
     vSync: 0,
     renderScale: 1.0,
     shadowQuality: "off",
     textureQuality: "full",
-    lodBias: 0.9,
+    lodBias: 0.85,
     fogStart: 85,
     fogEnd: 220,
     fogColor: "#a6c8e8",
@@ -161,7 +161,7 @@ export const QUALITY: Record<QualityName, QualityPreset> = {
     people: 8,
     rain: true,
     post: true,
-    ao: true,
+    ao: false,
     bloom: true,
     motionBlur: true,
     reflexos: true,

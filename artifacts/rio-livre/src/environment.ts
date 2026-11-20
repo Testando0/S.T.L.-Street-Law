@@ -94,12 +94,12 @@ export class Environment {
   private scratchSunLight = new THREE.Color("#fff4dd");
   private scratchSunLightB = new THREE.Color("#ffc0c8");
   private scratchHemi = new THREE.Color("#bcdde8");
-  private scratchHemiB = new THREE.Color("#3b5570");
+  private scratchHemiB = new THREE.Color("#5b7da6");
   private scratchHemiGround = new THREE.Color("#5c6449");
-  private scratchHemiGroundB = new THREE.Color("#0e2024");
+  private scratchHemiGroundB = new THREE.Color("#2a3f4c");
   private scratchFillA = new THREE.Color("#9dc4d8");
   private scratchFillB = new THREE.Color("#f2a5bc");
-  private scratchFillC = new THREE.Color("#2f4a6a");
+  private scratchFillC = new THREE.Color("#7ea3d6");
   private scratchFog = new THREE.Color("#6f8f8f");
   private scratchGlow = new THREE.Color();
   private scratchGlowB = new THREE.Color("#ff8a45");
@@ -279,7 +279,7 @@ export class Environment {
     this.envTexture.needsUpdate = true;
     const rt = this.pmrem.fromEquirectangular(this.envTexture);
     this.scene.environment = rt.texture;
-    this.scene.environmentIntensity = 0.2 + day * 0.72;
+    this.scene.environmentIntensity = 0.45 + day * 0.5;
     if (this.envRT) this.envRT.dispose();
     this.envRT = rt;
   }
@@ -372,11 +372,11 @@ export class Environment {
     this.sun.position.set(focus.x + this.sunDir.x * 190, this.sunDir.y * 240 + 20, focus.z + this.sunDir.z * 190);
     this.sun.target.position.set(focus.x, 0, focus.z);
     this.sun.color.copy(this.scratchSunLight).lerp(this.scratchSunLightB, sunset);
-    this.sun.intensity = 0.16 + day * 2.58;
-    this.hemi.intensity = 0.22 + day * 0.63;
+    this.sun.intensity = 0.2 + day * 2.0;
+    this.hemi.intensity = 0.62 + day * 0.4;
     this.hemi.color.copy(this.scratchHemi).lerp(this.scratchHemiB, night);
     this.hemi.groundColor.copy(this.scratchHemiGround).lerp(this.scratchHemiGroundB, night);
-    this.fill.intensity = day * 0.24;
+    this.fill.intensity = day * 0.24 + night * 0.55;
     this.fill.color.copy(this.scratchFillA).lerp(this.scratchFillB, sunset).lerp(this.scratchFillC, night);
 
     this.sky.position.set(focus.x, 10, focus.z);

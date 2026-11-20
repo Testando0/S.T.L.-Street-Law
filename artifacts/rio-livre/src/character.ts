@@ -22,8 +22,76 @@ const material = (color: string, roughness = 0.78, metalness = 0) => {
   return m;
 };
 
-const ownMaterial = (color: string, roughness: number) =>
-  new THREE.MeshStandardMaterial({ color, roughness });
+const fabricCache = new Map<string, THREE.CanvasTexture>();
+const fabricTexture = (kind: "shirt" | "denim" | "hair" | "skin") => {
+  let tex = fabricCache.get(kind);
+  if (tex) return tex;
+  const c = document.createElement("canvas");
+  c.width = 128;
+  c.height = 128;
+  const ctx = c.getContext("2d")!;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, 128, 128);
+  let seed = kind.length * 7919 + 13;
+  const rnd = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  if (kind === "shirt") {
+    for (let i = 0; i < 18; i++) {
+      ctx.fillStyle = `rgba(0,0,0,${0.03 + rnd() * 0.07})`;
+      ctx.fillRect(rnd() * 128, 0, 2 + rnd() * 7, 128);
+    }
+    for (let i = 0; i < 12; i++) {
+      ctx.fillStyle = `rgba(255,255,255,${0.04 + rnd() * 0.08})`;
+      ctx.fillRect(rnd() * 128, 0, 1 + rnd() * 4, 128);
+    }
+    ctx.fillStyle = "rgba(0,0,0,.2)";
+    ctx.fillRect(0, 118, 128, 10);
+    ctx.fillStyle = "rgba(255,255,255,.18)";
+    ctx.fillRect(0, 116, 128, 2);
+    const shade = ctx.createLinearGradient(0, 0, 0, 128);
+    shade.addColorStop(0, "rgba(255,255,255,.12)");
+    shade.addColorStop(1, "rgba(0,0,0,.1)");
+    ctx.fillStyle = shade;
+    ctx.fillRect(0, 0, 128, 128);
+  } else if (kind === "denim") {
+    for (let i = 0; i < 900; i++) {
+      ctx.fillStyle = rnd() > 0.5 ? "rgba(0,0,0,.07)" : "rgba(255,255,255,.07)";
+      ctx.fillRect(rnd() * 128, rnd() * 128, 1, 2 + rnd() * 3);
+    }
+    for (let i = 0; i < 8; i++) {
+      ctx.fillStyle = "rgba(255,255,255,.1)";
+      ctx.fillRect(i * 16 + 6, 0, 1, 128);
+    }
+    ctx.fillStyle = "rgba(255,255,255,.12)";
+    ctx.fillRect(0, 48, 128, 14);
+  } else if (kind === "hair") {
+    for (let i = 0; i < 60; i++) {
+      ctx.fillStyle = `rgba(0,0,0,${0.06 + rnd() * 0.16})`;
+      ctx.fillRect(rnd() * 128, 0, 1 + rnd() * 2, 128);
+    }
+    for (let i = 0; i < 24; i++) {
+      ctx.fillStyle = `rgba(255,255,255,${0.05 + rnd() * 0.1})`;
+      ctx.fillRect(rnd() * 128, 0, 1, 128);
+    }
+  } else {
+    for (let i = 0; i < 500; i++) {
+      ctx.fillStyle = rnd() > 0.5 ? "rgba(120,60,30,.05)" : "rgba(255,255,255,.05)";
+      ctx.fillRect(rnd() * 128, rnd() * 128, 2, 2);
+    }
+  }
+  tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.anisotropy = 2;
+  fabricCache.set(kind, tex);
+  return tex;
+};
+
+const ownMaterial = (color: string, roughness: number, map?: THREE.Texture) =>
+  new THREE.MeshStandardMaterial({ color, roughness, map: map ?? null });
 
 const capsule = (radius: number, length: number, mat: THREE.Material, key?: string) => {
   const mesh = new THREE.Mesh(
@@ -57,6 +125,8 @@ const mergeMeshes = (target: THREE.Mesh, others: THREE.Mesh[]) => {
   target.receiveShadow = sources.some((mesh) => mesh.receiveShadow);
   for (const mesh of others) mesh.removeFromParent();
 };
+
+const clampNum = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
 const HEAD_Y = 1.83;
 const NECK_Y = 1.655;
@@ -100,12 +170,22 @@ export class CharacterModel {
   private labelCanvas?: HTMLCanvasElement;
   speedForAnim = 0;
   jumpVelocity = 0;
+  private runBlend = 0;
+  private idleTime = Math.random() * 20;
+  private prevYaw = 0;
+  private turnRate = 0;
+  private turnLean = 0;
+  private wasGrounded = true;
+  private landTimer = 0;
+  private lookTarget = 0;
+  private lookTimer = 2 + Math.random() * 3;
+  private lookCurrent = 0;
 
   constructor(skin = "#c98b5e", shirt = "#ff6b35", pants = "#1f3c5b", hair = "#17110d", label = "") {
-    this.skinMat = ownMaterial(skin, 0.58);
-    this.shirtMat = ownMaterial(shirt, 0.85);
-    this.pantsMat = ownMaterial(pants, 0.9);
-    this.hairMat = ownMaterial(hair, 0.82);
+    this.skinMat = ownMaterial(skin, 0.56, fabricTexture("skin"));
+    this.shirtMat = ownMaterial(shirt, 0.82, fabricTexture("shirt"));
+    this.pantsMat = ownMaterial(pants, 0.88, fabricTexture("denim"));
+    this.hairMat = ownMaterial(hair, 0.7, fabricTexture("hair"));
     this.shoeMat = material("#f4f1e9", 0.55);
 
     this.hips = new THREE.Group();
@@ -481,7 +561,12 @@ export class CharacterModel {
       thumb.rotation.z = side * -0.45;
       thumb.rotation.x = 0.35;
       elbow.add(thumb);
-      mergeMeshes(forearm, [wrist, hand, thumb]);
+      const fingers = capsule(0.0135, 0.05, this.skinMat, "fingers");
+      fingers.scale.set(2.2, 1, 0.9);
+      fingers.position.set(0, -0.378, 0.012);
+      fingers.rotation.x = -0.28;
+      elbow.add(fingers);
+      mergeMeshes(forearm, [wrist, hand, thumb, fingers]);
 
       if (side < 0) this.leftElbow = elbow;
       else this.rightElbow = elbow;
@@ -585,13 +670,33 @@ export class CharacterModel {
 
   update(dt: number, speed: number, grounded = true) {
     this.speedForAnim += (speed - this.speedForAnim) * Math.min(1, dt * 9);
-    const moving = this.speedForAnim > 0.2;
-    const rate = Math.min(14, 4.6 + this.speedForAnim * 1.15);
+    const spd = this.speedForAnim;
+    const moving = spd > 0.2;
+    this.runBlend += ((spd > 5.6 ? 1 : 0) - this.runBlend) * Math.min(1, dt * 6);
+    const rb = this.runBlend;
+    const rate = Math.min(15, 4.4 + spd * 1.1);
     this.phase += dt * rate;
-    const amp = moving ? Math.min(0.86, 0.32 + this.speedForAnim * 0.07) : 0;
+    this.idleTime += dt;
+    const amp = moving ? Math.min(0.8 + rb * 0.25, 0.3 + spd * 0.07) : 0;
     const sin = Math.sin(this.phase);
     const cos = Math.cos(this.phase);
-    const breath = Math.sin(this.phase * 0.4) * 0.006;
+    const idle = moving ? 0 : 1;
+    const breath = Math.sin(this.idleTime * 1.9) * 0.012;
+
+    const yaw = this.group.rotation.y;
+    let dyaw = yaw - this.prevYaw;
+    if (dyaw > Math.PI) dyaw -= Math.PI * 2;
+    if (dyaw < -Math.PI) dyaw += Math.PI * 2;
+    this.prevYaw = yaw;
+    const rawTurn = dt > 0.0001 ? dyaw / dt : 0;
+    this.turnRate += (rawTurn - this.turnRate) * Math.min(1, dt * 8);
+    const targetTurnLean = clampNum(-this.turnRate * 0.035, -0.16, 0.16) * Math.min(1, spd / 4);
+    this.turnLean += (targetTurnLean - this.turnLean) * Math.min(1, dt * 7);
+
+    if (grounded && !this.wasGrounded) this.landTimer = 0.24;
+    this.wasGrounded = grounded;
+    if (this.landTimer > 0) this.landTimer = Math.max(0, this.landTimer - dt);
+    const land = this.landTimer > 0 ? Math.sin((this.landTimer / 0.24) * Math.PI) : 0;
 
     this.blinkTimer -= dt;
     if (this.blinkTimer <= 0) {
@@ -604,36 +709,57 @@ export class CharacterModel {
       this.eyeParts[i]!.scale.y = this.eyeBaseScaleY[i]! * lidScale;
     }
 
-    this.leftLeg.rotation.x = sin * amp * 0.95;
-    this.rightLeg.rotation.x = -sin * amp * 0.95;
-    this.leftKnee.rotation.x = 0.06 + Math.max(0, sin) * amp * 0.85;
-    this.rightKnee.rotation.x = 0.06 + Math.max(0, -sin) * amp * 0.85;
+    const stride = amp * (0.95 + rb * 0.35);
+    this.leftLeg.rotation.x = sin * stride + land * 0.45;
+    this.rightLeg.rotation.x = -sin * stride + land * 0.45;
+    this.leftKnee.rotation.x = 0.06 + rb * 0.12 + Math.max(0, sin) * amp * (0.85 + rb * 0.7) + land * 0.85;
+    this.rightKnee.rotation.x = 0.06 + rb * 0.12 + Math.max(0, -sin) * amp * (0.85 + rb * 0.7) + land * 0.85;
 
-    this.leftArm.rotation.x = -sin * amp * 0.68;
-    this.rightArm.rotation.x = sin * amp * 0.68;
-    this.leftArm.rotation.z = 0.1 + Math.abs(sin) * 0.018;
-    this.rightArm.rotation.z = -0.1 - Math.abs(sin) * 0.018;
-    this.leftElbow.rotation.x = 0.14 + Math.max(0, sin) * amp * 0.34;
-    this.rightElbow.rotation.x = 0.14 + Math.max(0, -sin) * amp * 0.34;
+    const swing = amp * (0.68 + rb * 0.45);
+    const sway = idle * Math.sin(this.idleTime * 0.9) * 0.035;
+    this.leftArm.rotation.x = -sin * swing + sway;
+    this.rightArm.rotation.x = sin * swing - sway;
+    this.leftArm.rotation.z = 0.1 + Math.abs(sin) * 0.018 + idle * 0.02 + land * 0.08;
+    this.rightArm.rotation.z = -0.1 - Math.abs(sin) * 0.018 - idle * 0.02 - land * 0.08;
+    const elbowBase = 0.14 + rb * 1.0 + idle * (0.1 + breath * 6);
+    this.leftElbow.rotation.x = elbowBase + Math.max(0, sin) * amp * 0.34;
+    this.rightElbow.rotation.x = elbowBase + Math.max(0, -sin) * amp * 0.34;
 
-    this.hips.rotation.z = sin * amp * 0.05;
-    this.hips.rotation.y = sin * amp * 0.07;
-    this.torso.rotation.y = -sin * amp * 0.06;
+    const shift = idle * Math.sin(this.idleTime * 0.55);
+    this.hips.rotation.z = sin * amp * 0.05 + shift * 0.03;
+    this.hips.rotation.y = sin * amp * (0.07 + rb * 0.03);
+    this.hips.position.x = shift * 0.014;
+    this.hips.position.y = HIPS_Y - land * 0.1;
+    this.torso.rotation.y = -sin * amp * (0.06 + rb * 0.05);
+    this.torso.rotation.z = this.turnLean - shift * 0.02;
+    const chest = 1 + breath * idle;
+    this.torso.scale.set(chest, 1 + breath * idle * 0.5, 0.72 * chest);
 
-    const bob = moving ? Math.abs(cos) * 0.03 : breath;
+    const bob = (moving ? Math.abs(cos) * (0.03 + rb * 0.025) : breath) - land * 0.1;
     this.torso.position.y = TORSO_Y + bob;
+    this.torso.position.x = shift * 0.01;
     this.neck.position.y = NECK_Y + bob;
     this.headRig.position.y = HEAD_Y + bob;
 
-    const targetLean = moving ? Math.min(0.08, Math.max(0, (this.speedForAnim - 4.4) * 0.016)) : 0;
+    const targetLean = moving ? Math.min(0.08, Math.max(0, (spd - 4.4) * 0.016)) + rb * 0.1 : 0;
     this.lean += (targetLean - this.lean) * Math.min(1, dt * 6);
-    this.group.rotation.x = this.lean;
+    this.group.rotation.x = this.lean + land * 0.06;
 
-    this.headRig.rotation.y = Math.sin(this.phase * 0.11) * 0.05;
-    this.headRig.rotation.x = Math.sin(this.phase * 0.07 + 1.3) * 0.03;
+    this.lookTimer -= dt;
+    if (this.lookTimer <= 0) {
+      this.lookTimer = 1.6 + Math.random() * 4;
+      this.lookTarget = moving ? 0 : (Math.random() - 0.5) * 0.9;
+    }
+    if (moving) this.lookTarget = 0;
+    this.lookCurrent += (this.lookTarget - this.lookCurrent) * Math.min(1, dt * 2.6);
+    this.headRig.rotation.y = Math.sin(this.phase * 0.11) * 0.04 + this.lookCurrent - this.turnLean * 1.5;
+    this.headRig.rotation.x = Math.sin(this.phase * 0.07 + 1.3) * 0.03 - rb * 0.05 + land * 0.1;
+    this.headRig.rotation.z = this.turnLean * 0.8;
 
     if (!grounded) {
       this.group.rotation.x = Math.max(this.lean, 0.02);
+      this.hips.position.y = HIPS_Y;
+      this.torso.rotation.z = 0;
       this.leftLeg.rotation.x = -0.5;
       this.rightLeg.rotation.x = 0.3;
       this.leftKnee.rotation.x = 0.95;

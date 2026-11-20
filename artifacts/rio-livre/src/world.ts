@@ -783,7 +783,7 @@ export class World {
     const material = bucket.material;
     const emissive = material instanceof THREE.MeshStandardMaterial ? material.emissive.getHex() : 0;
     const final = new THREE.Mesh(merged, material);
-    final.castShadow = bucket.cast && this.quality === "high";
+    final.castShadow = false;
     final.receiveShadow = true;
     final.userData.merged = true;
     final.userData.cullCell = `${bucket.cx},${bucket.cz}`;
@@ -1026,9 +1026,13 @@ export class World {
         new THREE.BoxGeometry(0.16, 3.1, 0.16),
         new THREE.MeshStandardMaterial({ color: "#3a4750", roughness: 0.5, metalness: 0.5 }),
       );
-      pole.position.set(busX, 1.55, busZ);
+      pole.position.set(busX - 2.1, 1.55, busZ);
       pole.castShadow = true;
       this.buildingGroup.add(pole);
+      const pole2 = new THREE.Mesh(pole.geometry, pole.material);
+      pole2.position.set(busX + 2.1, 1.55, busZ);
+      pole2.castShadow = true;
+      this.buildingGroup.add(pole2);
       const shelter = new THREE.Mesh(
         new THREE.BoxGeometry(4.4, 0.16, 1.9),
         new THREE.MeshStandardMaterial({ color: "#9fb7c4", roughness: 0.5, metalness: 0.2 }),
@@ -1161,6 +1165,7 @@ export class World {
       awn.rotation.x = frontSign * -0.14;
       awn.castShadow = true;
       this.buildingGroup.add(awn);
+      this.addAwningBrackets(awn.position.x, height - 0.32, z + frontSign * (d / 2), frontSign, w * 0.56, 1.5);
     }
 
     const top = this.addUpperFloors(x, z, w, d, height, facadeIndex, facing ? facing : "south", wide);
@@ -1255,6 +1260,7 @@ export class World {
       "balconySlab",
       () => new THREE.MeshStandardMaterial({ color: "#cfc6b2", roughness: 0.85 }),
     );
+    if (this.quality === "low") return top;
     const ru = Math.max(1, Math.round(bw / 6));
     const cellW = bw / (ru * 2);
     const frontFace = z + frontSign * (bd / 2);
@@ -1354,6 +1360,7 @@ export class World {
       this.buildingGroup.add(door);
     }
 
+    if (this.quality === "low") return;
     const units = rng.int(1, 3);
     for (let i = 0; i < units; i++) {
       const { px, pz } = spot();
@@ -1416,10 +1423,30 @@ export class World {
       new THREE.BoxGeometry(bayW * 0.88, 0.12, 1.6),
       this.awningMaterials[this.rng.int(0, this.awningMaterials.length - 1)]!,
     );
-    awn.position.set(doorX, Math.max(2.3, baseH * 0.64), frontZ - s * 0.72);
+    const awnY = Math.max(2.3, baseH * 0.64);
+    awn.position.set(doorX, awnY, frontZ - s * 0.72);
     awn.rotation.x = s * 0.14;
     awn.castShadow = true;
     this.buildingGroup.add(awn);
+    this.addAwningBrackets(doorX, awnY, frontZ, -s, bayW * 0.88, 1.6);
+  }
+
+  private addAwningBrackets(cx: number, y: number, wallZ: number, outward: number, width: number, depth: number) {
+    const mat = this.shared(
+      "awningBracket",
+      () => new THREE.MeshStandardMaterial({ color: "#2b3236", roughness: 0.5, metalness: 0.6 }),
+    );
+    const out = outward;
+    for (const sx of [-1, 1]) {
+      const px = cx + sx * (width / 2 - 0.12);
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, depth), mat);
+      arm.position.set(px, y - 0.1, wallZ + out * (depth / 2 - 0.1));
+      this.buildingGroup.add(arm);
+      if (this.quality === "low") continue;
+      const strut = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.9, 0.05), mat);
+      strut.position.set(px, y + 0.3, wallZ + out * 0.04);
+      this.buildingGroup.add(strut);
+    }
   }
 
   /** Transforma uma fachada que ja existia na cidade numa loja funcional. */
@@ -2947,10 +2974,19 @@ export class World {
     this.addCollider(x, z, 0.5, 0.5, 5.4);
   }
 
+  private blockedByBuilding(x: number, z: number, margin: number) {
+    for (const c of this.colliders) {
+      if (c.height < 3 || c.maxX - c.minX < 3 || c.maxZ - c.minZ < 3) continue;
+      if (x > c.minX - margin && x < c.maxX + margin && z > c.minZ - margin && z < c.maxZ + margin) return true;
+    }
+    return this.isNearShopOrHouse(x, z, margin);
+  }
+
   private addTree(x: number, z: number, scale = 1) {
     const spot = this.roadSafe(x, z);
     x = spot.x;
     z = spot.z;
+    if (this.blockedByBuilding(x, z, 1.8)) return new THREE.Group();
     const group = new THREE.Group();
     const leafMat = this.rng.pick(this.treeLeafMaterials);
     const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.26, 3.6, 8), this.treeTrunkMaterial);
@@ -2982,6 +3018,7 @@ export class World {
     const spot = this.roadSafe(x, z);
     x = spot.x;
     z = spot.z;
+    if (this.blockedByBuilding(x, z, 1.8)) return new THREE.Group();
     const group = new THREE.Group();
     const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.3, 5.8, 12), this.palmTrunkMaterial);
     trunk.position.y = 2.9;

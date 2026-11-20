@@ -73,7 +73,7 @@ RedRP é um jogo 3D de mundo aberto inspirado na cultura carioca. GhostCity é u
 - Conteúdo original; não copiar nomes, artes ou assets do RioRise.
 - Código sem comentários.
 - Experiência mobile-first, com controles de toque e bom desempenho em celular.
-- Versão exibida do jogo: `1.7.0`; APK: `1.0.12` (versionCode 10012).
+- Versão exibida do jogo: `1.7.1`; APK: `1.0.12` (versionCode 10012).
 
 ## Gotchas
 
