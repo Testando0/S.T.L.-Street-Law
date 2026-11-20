@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "ZyqEYhaYaeqiKGNUARadz"
+uri = "file://artifacts/android-app/output/rio-livre.apk"
+type = "unspecified"
+title = "RedRP para Android — versão 1.0.3"
+description = "APK assinado atualizado. Inclui o bundle RedRP/GhostCity, o Jardim do Amor e conexão ao servidor publicado."
+logical_id = "a7658ae4-3e40-4812-bc5c-5acfde279e66"
+content_hash = "sha256:ec170ac55ae39f70a01d07996f135429c7b69a16cb1ffe475a8d1bfeb2f441db"
+size = 541837
+mtime_ms = 1792524502015
+storage_uri = "gcs://replit-rams-assets-spock/rams/assets/repl:40327194-9a9e-4637-b8e1-e6c50a380ab0/a7658ae4-3e40-4812-bc5c-5acfde279e66/ae6b00dc-2e95-49ee-9b25-efebdd6a1896"
+storage_version_token = "1792524530286192"
+content_type = "application/octet-stream"

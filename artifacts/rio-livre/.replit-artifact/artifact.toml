@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "RedRP"
+version = "1.1.0"
+id = "artifacts/rio-livre"
+router = "path"
+
+[[services]]
+name = "web"
+paths = ["/"]
+localPort = 5173
+
+[services.development]
+run = "pnpm --filter @workspace/rio-livre run dev"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/rio-livre", "run", "build"]
+publicDir = "artifacts/rio-livre/dist"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "5173"
+BASE_PATH = "/"

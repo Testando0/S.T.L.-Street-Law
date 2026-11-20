@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#071b1e" />
+    <meta name="description" content="RedRP é um jogo mobile 3D de mundo aberto. Explore GhostCity, uma cidade carioca inspirada no Dia dos Namorados, e escreva sua própria história." />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icon-192.png" />
+    <title>RedRP — GhostCity, cidade do amor</title>
+    <script>
+      window.__RIO_APK__ = false;
+      window.__RIO_DEFAULT_SERVER__ = "";
+    </script>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene" aria-label="Mundo aberto RedRP na cidade GhostCity"></canvas>
+      <div class="vignette"></div>
+      <div class="sun-glare"></div>
+
+      <div id="loading-screen" class="screen loading-screen">
+        <div class="loading-brand">
+          <div class="brand-mark large"><span class="brand-sun"></span><span class="brand-hill h1"></span><span class="brand-hill h2"></span></div>
+          <h1>RED<em>RP</em></h1>
+          <p>GhostCity · a cidade do amor</p>
+        </div>
+        <div class="loading-track"><span id="loading-bar"></span></div>
+        <div class="loading-meta"><span id="loading-label">Preparando a cidade...</span><span id="loading-percent">0%</span></div>
+        <p class="loading-tip" id="loading-tip">Dica: use o celular na horizontal para jogar melhor.</p>
+        <div class="loading-footer">UMA CIDADE FUNDADA COM AMOR · EM HOMENAGEM AO NATHAN</div>
+      </div>
+
+      <div id="menu" class="screen menu-screen hidden">
+        <div class="menu-sun"></div>
+        <div class="menu-cloud c1"></div>
+        <div class="menu-cloud c2"></div>
+        <div class="menu-cloud c3"></div>
+        <div class="menu-hills">
+          <div class="hill hill-a"></div>
+          <div class="hill hill-b"></div>
+          <div class="hill hill-c"></div>
+          <div class="favela-lights"></div>
+        </div>
+
+        <header class="menu-header">
+          <div class="brand">
+            <div class="brand-mark"><span class="brand-sun"></span><span class="brand-hill h1"></span><span class="brand-hill h2"></span></div>
+          <div class="brand-copy"><strong>RED<em>RP</em></strong><span>GhostCity · cidade do amor</span></div>
+          </div>
+          <div class="menu-header-right">
+            <button id="menu-online-chip" class="online-chip" type="button">
+              <span class="status-dot"></span>
+              <span id="menu-online-text">Conectando...</span>
+            </button>
+            <button class="icon-button" id="btn-menu-settings" aria-label="Ajustes">
+              <svg viewBox="0 0 24 24"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Zm8-3.2c0-.5 0-1-.1-1.4l2-1.6-2-3.4-2.4 1a7.5 7.5 0 0 0-2.4-1.4L14.7 2h-5.4l-.4 2.6A7.8 7.8 0 0 0 6.5 6l-2.4-1-2 3.4 2 1.6a8.2 8.2 0 0 0 0 2.8l-2 1.6 2 3.4 2.4-1a7.8 7.8 0 0 0 2.4 1.4l.4 2.6h5.4l.4-2.6a7.5 7.5 0 0 0 2.4-1.4l2.4 1 2-3.4-2-1.6c.1-.4.1-.9.1-1.4Z"/></svg>
+            </button>
+            <button class="icon-button" id="btn-menu-help" aria-label="Como jogar">
+              <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm.1 15.5a1.3 1.3 0 1 1 0 2.6 1.3 1.3 0 0 1 0-2.6Zm.1-11.8c2.5 0 4.2 1.5 4.2 3.7 0 1.5-.7 2.4-2 3.3-1 .7-1.2 1-1.2 2h-2.4c0-1.7.6-2.5 2-3.4.9-.6 1.2-1 1.2-1.8 0-1-.8-1.6-1.9-1.6-1 0-1.8.6-2.2 1.5l-2.1-1c.7-1.6 2.3-2.7 4.4-2.7Z"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <main class="menu-main">
+          <section class="hero-copy">
+            <p class="kicker"><span></span> TEMPORADA 01 · MARÉ DE HISTÓRIAS</p>
+            <h1 class="hero-title">RED<em>RP</em></h1>
+            <p class="hero-tagline">GhostCity.<br />A cidade do amor.</p>
+            <p class="hero-desc">Explore praias, becos e avenidas. Faça corridas, entregas e missões. Suba de nível, turbine seu carro e encontre a galera no servidor online.</p>
+            <div class="hero-actions">
+              <button id="btn-play" class="btn btn-primary" type="button">
+                <span class="btn-glow"></span>
+                <span class="btn-label"><small>COMEÇAR A VIVER</small>JOGAR AGORA</span>
+                <svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5-11-6.5Z"/></svg>
+              </button>
+              <button id="btn-online" class="btn btn-secondary" type="button">
+                <span class="btn-label"><small>SERVIDOR DA CIDADE</small>MULTIPLAYER</span>
+                <span class="online-pill"><i></i><b id="hero-online-count">0</b> online</span>
+              </button>
+            </div>
+            <div class="quick-actions">
+              <button data-open="garage" class="quick-action"><span class="qa-icon ga">G</span><span>Garagem<small>Tunar e comprar</small></span></button>
+              <button data-open="customize" class="quick-action"><span class="qa-icon cu">P</span><span>Personagem<small>Estilo do rolê</small></span></button>
+              <button data-open="phone" class="quick-action"><span class="qa-icon ph">C</span><span>Celular<small>Missões e mapa</small></span></button>
+            </div>
+          </section>
+
+          <aside class="profile-card">
+            <div class="profile-ribbon">SEU PERSONAGEM</div>
+            <div class="profile-avatar" id="menu-avatar">
+              <div class="avatar-sun"></div>
+              <div class="avatar-body">
+                <div class="a-head"><div class="a-hair"></div><div class="a-face"></div></div>
+                <div class="a-torso"></div>
+                <div class="a-legs"><i></i><i></i></div>
+                <div class="a-arm left"></div>
+                <div class="a-arm right"></div>
+              </div>
+              <div class="avatar-shadow"></div>
+            </div>
+            <div class="profile-info">
+              <span class="profile-level">NÍVEL <b id="menu-level">1</b></span>
+              <h2 id="menu-name">Carioca</h2>
+              <p><span class="money-dot">R$</span> <b id="menu-money">780</b></p>
+            </div>
+            <div class="xp-wrap"><span id="menu-xp-bar"></span></div>
+            <div class="profile-stats">
+              <div><b id="menu-missions">0</b><span>missões</span></div>
+              <div><b id="menu-distance">0</b><span>km rodados</span></div>
+              <div><b id="menu-best">--</b><span>melhor corrida</span></div>
+            </div>
+            <button id="btn-profile-edit" class="profile-edit" type="button">EDITAR PERSONAGEM</button>
+          </aside>
+        </main>
+
+        <footer class="menu-footer">
+          <span>v<span id="menu-version">1.3.1</span> · REDRP · GHOSTCITY · CIDADE DO AMOR</span>
+          <span class="footer-actions"><a id="btn-apk" class="link-button hidden" href="./download/rio-livre.apk" download>BAIXAR APK</a><button id="btn-install" class="link-button hidden">INSTALAR APP</button><button id="btn-fullscreen" class="link-button">TELA CHEIA</button><button id="btn-footer-settings" class="link-button">AJUSTES</button></span>
+        </footer>
+        <div class="build-stamp" id="build-stamp">SERVIDOR LOCAL</div>
+      </div>
+
+      <div id="hud" class="screen hud hidden">
+        <div class="hud-top-left">
+          <div class="hud-player-card">
+            <div class="hud-avatar" id="hud-avatar"><span></span></div>
+            <div class="hud-player-copy">
+              <div class="hud-name-row"><b id="hud-name">Carioca</b><span class="hud-level" id="hud-level">1</span></div>
+              <div class="hud-money"><span>R$</span><b id="hud-money">780</b></div>
+              <div class="hud-vitals">
+                <div class="hud-bar hp"><span id="hud-hp-bar"></span><small>VIDA</small></div>
+                <div class="hud-bar food"><span id="hud-hunger-bar"></span><small>FOME</small></div>
+              </div>
+              <div class="hud-xp"><span id="hud-xp-bar"></span></div>
+            </div>
+          </div>
+          <div id="hud-wanted" class="wanted hidden"></div>
+        </div>
+
+        <div class="hud-top-center">
+          <div id="mission-hud" class="mission-hud hidden">
+            <div class="mission-icon" id="mission-icon">C</div>
+            <div class="mission-copy"><span id="mission-kind">MISSÃO</span><b id="mission-title">Corrida na Orla</b><small id="mission-sub">Siga até o ponto marcado</small></div>
+            <div class="mission-timer" id="mission-timer">01:30</div>
+          </div>
+          <div id="mission-progress" class="mission-progress hidden"><span id="mission-progress-fill"></span></div>
+        </div>
+
+        <div class="hud-top-right">
+          <div class="minimap-shell">
+            <div class="minimap-ring"></div>
+            <canvas id="minimap" width="320" height="320"></canvas>
+            <div class="minimap-compass">N</div>
+            <div class="minimap-clock"><span id="hud-clock">10:30</span><i id="hud-weather">SOL</i></div>
+            <div class="minimap-online"><span class="status-dot"></span><b id="hud-online">1</b> na cidade</div>
+          </div>
+          <div class="hud-actions">
+            <button class="hud-icon-btn" id="btn-map" aria-label="Mapa"><svg viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Zm6-1v13m6-15v13"/></svg></button>
+            <button class="hud-icon-btn" id="btn-pause" aria-label="Pausar"><svg viewBox="0 0 24 24"><path d="M6 4h4v16H6V4Zm8 0h4v16h-4V4Z"/></svg></button>
+          </div>
+        </div>
+
+        <div id="objective-card" class="objective-card hidden">
+          <span class="objective-arrow">▲</span>
+          <div><small id="objective-label">DESTINO</small><b id="objective-distance">0 m</b></div>
+        </div>
+
+        <div id="interaction-prompt" class="interaction-prompt hidden">
+          <span class="prompt-key" id="prompt-key">E</span>
+          <span id="prompt-text">Entrar no carro</span>
+        </div>
+
+        <div id="vehicle-hud" class="vehicle-hud hidden">
+          <div class="speed-dial">
+            <div class="speed-ring"></div>
+            <b id="speed-value">0</b><span>km/h</span>
+          </div>
+          <div class="vehicle-name"><span id="vehicle-label">FUBIQUINHA</span><i id="vehicle-health"><b></b></i></div>
+        </div>
+
+        <div id="damage-flash" class="damage-flash"></div>
+        <div id="death-overlay" class="death-overlay hidden">
+          <div class="death-card">
+            <small>VOCÊ MORREU</small>
+            <h2 id="death-reason">Atropelamento</h2>
+            <div class="death-timer" id="death-timer">30</div>
+            <p>Aguarde para reviver com vida cheia.</p>
+          </div>
+        </div>
+        <div id="toast-stack" class="toast-stack"></div>
+        <div id="chat-feed" class="chat-feed"></div>
+
+        <div id="joystick-zone" class="joystick-zone" aria-label="Controle de movimento">
+          <div class="joystick-base" id="joystick-base"><span class="joy-tick n"></span><span class="joy-tick s"></span><span class="joy-tick e"></span><span class="joy-tick w"></span><div class="joystick-knob" id="joystick-knob"></div></div>
+          <span class="joystick-label">MOVER</span>
+        </div>
+
+        <div class="touch-controls">
+          <button class="touch-btn touch-action" data-action="interact" aria-label="Interagir"><span class="tb-icon">E</span><small>AÇÃO</small></button>
+          <button class="touch-btn touch-vehicle" data-action="vehicle" aria-label="Entrar ou sair do veículo"><svg viewBox="0 0 24 24"><path d="M5 11 6.5 6h11L19 11m-14 0h14a2 2 0 0 1 2 2v4h-2a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H3v-4a2 2 0 0 1 2-2Zm2 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm10 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></svg><small>VEÍCULO</small></button>
+          <button class="touch-btn touch-jump" data-action="jump" aria-label="Pular"><svg viewBox="0 0 24 24"><path d="M12 3 6 9h4v7h4V9h4l-6-6Z"/></svg><small>PULAR</small></button>
+          <button class="touch-btn touch-sprint" data-action="sprint" aria-label="Correr"><svg viewBox="0 0 24 24"><path d="M13 3a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm-2 6 3 2 2 5h2v2h-3l-2-4-2 3v4H9v-6l2-3-3 1-1-2 4-2Z"/></svg><small>CORRER</small></button>
+          <button class="touch-btn touch-phone" data-action="phone" aria-label="Celular"><svg viewBox="0 0 24 24"><path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm0 3v13h10V5H7Zm4 14h2v1h-2v-1Z"/></svg><small>CELULAR</small></button>
+          <button class="touch-btn touch-chat" data-action="chat" aria-label="Chat"><svg viewBox="0 0 24 24"><path d="M4 3h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-5 4v-4H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/></svg><small>CHAT</small></button>
+        </div>
+
+        <div class="desktop-hints"><span><b>WASD</b> mover</span><span><b>ARRASTE</b> câmera</span><span><b>E</b> ação</span><span><b>F</b> veículo</span><span><b>TAB</b> celular</span><span><b>ESC</b> pausa</span></div>
+        <div id="fps-counter" class="fps-counter hidden">60 FPS</div>
+        <div id="portrait-warning" class="portrait-warning">
+          <div class="rotate-phone"><span></span></div>
+          <h2>Vire o celular</h2>
+          <p>A GhostCity fica muito melhor na horizontal.</p>
+        </div>
+      </div>
+
+      <div id="phone-modal" class="modal hidden">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-header"><div><small>GHOSTCITY OS</small><b>Celular da cidade</b></div><span id="phone-clock">10:30</span></div>
+          <div class="phone-signal"><span>5G</span><i></i><b id="phone-online">OFFLINE</b></div>
+          <div class="phone-apps">
+            <button class="phone-app active" data-phone-tab="missions"><span class="app-icon m">M</span><small>Missões</small></button>
+            <button class="phone-app" data-phone-tab="map"><span class="app-icon mp">M</span><small>Mapa</small></button>
+            <button class="phone-app" data-phone-tab="garage"><span class="app-icon g">G</span><small>Garagem</small></button>
+            <button class="phone-app" data-phone-tab="inventory"><span class="app-icon i">I</span><small>Inventário</small></button>
+            <button class="phone-app" data-phone-tab="profile"><span class="app-icon p">P</span><small>Perfil</small></button>
+          </div>
+          <div class="phone-screen">
+            <section class="phone-tab active" data-tab-panel="missions">
+              <div class="app-title"><div><small>TRABALHO DA SEMANA</small><h3>Missões da cidade</h3></div><span class="live-tag">AO VIVO</span></div>
+              <div id="mission-list" class="mission-list"></div>
+              <button id="btn-call-vehicle" class="phone-wide-btn" type="button">CHAMAR MEU VEÍCULO</button>
+            </section>
+            <section class="phone-tab" data-tab-panel="map">
+              <div class="app-title"><div><small>GPS DA CIDADE</small><h3>Mapa da GhostCity</h3></div><span class="live-tag">GPS</span></div>
+              <div class="map-frame"><canvas id="big-map" width="540" height="540"></canvas><span class="map-you">VOCÊ</span></div>
+              <div class="map-legend"><span><i class="lg-mission"></i> missões</span><span><i class="lg-you"></i> você</span><span><i class="lg-online"></i> jogadores</span><span><i class="lg-garage"></i> garagem</span></div>
+            </section>
+            <section class="phone-tab" data-tab-panel="garage">
+              <div class="app-title"><div><small>OFICINA DO ZÉ</small><h3>Sua garagem</h3></div><span class="live-tag">TUNE</span></div>
+              <div id="phone-garage-list" class="phone-garage-list"></div>
+              <button class="phone-wide-btn" data-open="garage" type="button">ABRIR GARAGEM COMPLETA</button>
+            </section>
+            <section class="phone-tab" data-tab-panel="inventory">
+              <div class="app-title"><div><small>BOLSA</small><h3>Inventário</h3></div><span class="live-tag">ITEMS</span></div>
+              <div id="phone-inventory-list" class="phone-list"></div>
+              <div class="app-title" style="margin-top:10px"><div><small>ROUPAS</small><h3>Compras / Troca</h3></div><span class="live-tag">LOJA</span></div>
+              <div id="phone-clothes-list" class="phone-list"></div>
+              <div class="app-title" style="margin-top:10px"><div><small>CASA</small><h3>Imobiliária</h3></div><span class="live-tag">IMÓVEIS</span></div>
+              <div id="phone-house-list" class="phone-list"></div>
+            </section>
+            <section class="phone-tab" data-tab-panel="profile">
+              <div class="app-title"><div><small>REDE GHOSTCITY</small><h3>Seu perfil</h3></div><span class="live-tag">ID</span></div>
+              <div class="profile-app-card"><span id="phone-profile-initial">C</span><div><b id="phone-profile-name">Carioca</b><small id="phone-profile-id">ID</small></div></div>
+              <div class="profile-app-stats"><div><b id="phone-missions">0</b><span>missões</span></div><div><b id="phone-level">1</b><span>nível</span></div><div><b id="phone-money">R$ 0</b><span>dinheiro</span></div></div>
+              <button class="phone-wide-btn ghost" data-open="customize" type="button">MUDAR VISUAL</button>
+            </section>
+          </div>
+          <div class="phone-homebar"></div>
+        </div>
+        <button class="modal-close phone-close" data-close-modal aria-label="Fechar">×</button>
+      </div>
+
+      <div id="garage-modal" class="modal hidden">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="panel garage-panel">
+          <button class="panel-x" data-close-modal aria-label="Fechar">×</button>
+          <div class="panel-header">
+            <div><p class="kicker"><span></span> OFICINA DO ZÉ</p><h2>Garagem</h2><p>Compre, escolha e turbine sua máquina.</p></div>
+            <div class="panel-balance"><small>SEU SALDO</small><b id="garage-money">R$ 0</b></div>
+          </div>
+          <div class="garage-layout">
+            <div class="garage-showcase">
+              <div class="garage-floor"><div class="garage-car" id="garage-car-preview"><span class="gc-body"></span><span class="gc-cabin"></span><span class="gc-wheel w1"></span><span class="gc-wheel w2"></span><span class="gc-light"></span></div></div>
+              <div class="garage-car-name"><small>VEÍCULO ATIVO</small><b id="garage-active-name">Fubiquinha</b><span id="garage-active-desc">O clássico popular.</span></div>
+              <div class="upgrade-grid">
+                <div class="upgrade-card"><span>MOTOR</span><div class="upgrade-pips" data-upgrade="engine"></div><button data-upgrade-buy="engine" type="button">TURBINAR</button></div>
+                <div class="upgrade-card"><span>TURBO</span><div class="upgrade-pips" data-upgrade="turbo"></div><button data-upgrade-buy="turbo" type="button">INSTALAR</button></div>
+                <div class="upgrade-card"><span>PNEUS</span><div class="upgrade-pips" data-upgrade="tires"></div><button data-upgrade-buy="tires" type="button">MELHORAR</button></div>
+              </div>
+              <div class="paint-row"><span>PINTURA</span><div id="paint-swatches" class="swatches"></div></div>
+              <button id="btn-spawn-vehicle" class="btn btn-primary wide" type="button">USAR ESTE VEÍCULO</button>
+            </div>
+            <div class="garage-list-wrap"><div class="garage-list-head"><h3>Carros & motos</h3><span id="garage-owned-count">1/8</span></div><div id="garage-list" class="garage-list"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="shop-modal" class="modal hidden">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="panel shop-panel">
+          <button class="panel-x" data-close-modal aria-label="Fechar">×</button>
+          <div class="panel-header">
+            <div><p class="kicker"><span></span> <span id="shop-kind">COMÉRCIO</span></p><h2 id="shop-name">Loja</h2><p id="shop-desc">Bem-vindo.</p></div>
+            <div class="panel-balance"><small>SEU SALDO</small><b id="shop-money">R$ 0</b></div>
+          </div>
+          <div id="shop-tabs" class="shop-tabs">
+            <button data-shop-tab="food" type="button">COMIDA</button>
+            <button data-shop-tab="clothes" type="button">ROUPAS</button>
+            <button data-shop-tab="medicine" type="button">REMÉDIOS</button>
+            <button data-shop-tab="material" type="button">PEÇAS</button>
+          </div>
+          <div id="shop-items" class="shop-items"></div>
+        </div>
+      </div>
+
+      <div id="customize-modal" class="modal hidden">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="panel customize-panel">
+          <button class="panel-x" data-close-modal aria-label="Fechar">×</button>
+          <div class="panel-header"><div><p class="kicker"><span></span> ESTÚDIO DO ROLÊ</p><h2>Seu personagem</h2><p>Monte um visual que fale por você.</p></div><div class="panel-balance"><small>NOME NA CIDADE</small><input id="custom-name" maxlength="18" class="name-input" /></div></div>
+          <div class="customize-layout">
+            <div class="customize-preview">
+              <div class="preview-sun"></div><div class="preview-hill"></div>
+              <div class="preview-avatar" id="preview-avatar"><div class="avatar-body"><div class="a-head"><div class="a-hair"></div><div class="a-face"></div></div><div class="a-torso"></div><div class="a-legs"><i></i><i></i></div><div class="a-arm left"></div><div class="a-arm right"></div></div><div class="avatar-shadow"></div></div>
+              <div class="preview-label"><b id="preview-name">Carioca</b><span>PRONTO PARA O ROLÊ</span></div>
+            </div>
+            <div class="customize-options">
+              <div class="option-group"><label>TOM DE PELE</label><div class="swatches" id="skin-swatches"></div></div>
+              <div class="option-group"><label>CAMISA</label><div class="swatches" id="shirt-swatches"></div></div>
+              <div class="option-group"><label>CALÇA</label><div class="swatches" id="pants-swatches"></div></div>
+              <div class="option-group"><label>CABELO</label><div class="swatches" id="hair-swatches"></div></div>
+              <button id="btn-custom-save" class="btn btn-primary wide" type="button">SALVAR VISUAL</button>
+              <p class="fine-print">Seu visual fica salvo neste aparelho e aparece no multiplayer.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="settings-modal" class="modal hidden">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="panel settings-panel">
+          <button class="panel-x" data-close-modal aria-label="Fechar">×</button>
+          <div class="panel-header"><div><p class="kicker"><span></span> AJUSTES DA CIDADE</p><h2>Configurações</h2><p>Deixe o jogo do seu jeito e conecte seu servidor.</p></div></div>
+          <div class="settings-layout">
+            <section class="settings-section">
+              <h3>Gráficos</h3>
+              <div class="quality-options">
+                <button data-quality="low" type="button"><b>Leve</b><small>celulares antigos</small></button>
+                <button data-quality="medium" type="button"><b>Padrão · recomendado</b><small>nitidez e sombras</small></button>
+                <button data-quality="high" type="button"><b>Alta · mais beleza</b><small>PC e celulares fortes</small></button>
+              </div>
+              <label class="toggle-row"><span>Mostrar FPS<small>Acompanhe o desempenho</small></span><input type="checkbox" id="setting-fps" /><i class="toggle"></i></label>
+              <label class="toggle-row"><span>Tremor de câmera<small>Impactos e velocidade</small></span><input type="checkbox" id="setting-shake" /><i class="toggle"></i></label>
+            </section>
+            <section class="settings-section">
+              <h3>Áudio e controle</h3>
+              <label class="range-row"><span>Volume geral <b id="master-value">80%</b></span><input type="range" min="0" max="100" id="setting-master" /></label>
+              <label class="range-row"><span>Música <b id="music-value">70%</b></span><input type="range" min="0" max="100" id="setting-music" /></label>
+              <label class="range-row"><span>Sensibilidade da câmera <b id="sens-value">100%</b></span><input type="range" min="30" max="220" id="setting-sens" /></label>
+            </section>
+            <section class="settings-section server-section">
+              <h3>Modo de jogo</h3>
+              <p>Online entra no servidor da cidade; Offline joga só, sem internet. O endereço do servidor já vem configurado.</p>
+              <div class="online-mode-options">
+                <button id="setting-online" class="mode-option" type="button"><b>ONLINE</b><small>Servidor da cidade</small></button>
+                <button id="setting-offline" class="mode-option" type="button"><b>OFFLINE</b><small>Só você, sem internet</small></button>
+              </div>
+              <div class="server-status" id="server-status"><span class="status-dot"></span><span>Servidor local detectado</span></div>
+            </section>
+            <section class="settings-section danger-section">
+              <h3>Conta local</h3>
+              <p>Progresso salvo automaticamente neste aparelho.</p>
+              <button id="btn-reset-save" class="danger-button" type="button">RECOMEÇAR DO ZERO</button>
+            </section>
+          </div>
+          <button id="btn-settings-done" class="btn btn-primary wide" type="button">SALVAR E VOLTAR</button>
+        </div>
+      </div>
+
+      <div id="help-modal" class="modal hidden">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="panel help-panel">
+          <button class="panel-x" data-close-modal aria-label="Fechar">×</button>
+          <div class="panel-header"><div><p class="kicker"><span></span> PRIMEIROS PASSOS</p><h2>Como jogar</h2><p>Uma cidade inteira, dois controles e muitas histórias.</p></div></div>
+          <div class="help-grid">
+            <div class="help-card"><b>NO CELULAR</b><p>Use o direcional da esquerda para andar. Arraste o cenário para girar a câmera. Toque nos botões para agir, pular, entrar em veículos e abrir o celular.</p></div>
+            <div class="help-card"><b>NO COMPUTADOR</b><p><b>WASD</b> anda, <b>Shift</b> corre, <b>Espaço</b> pula, <b>E</b> interage, <b>F</b> entra/sai do carro, <b>Tab</b> abre o celular e <b>Esc</b> pausa.</p></div>
+            <div class="help-card"><b>MISSÕES</b><p>Chegue aos pontos com ícone e pressione ação. Corridas exigem um veículo. Complete trabalhos, ganhe dinheiro, XP e suba de nível.</p></div>
+            <div class="help-card"><b>MULTIPLAYER</b><p>Jogue com outras pessoas no servidor da cidade. Converse no chat, encontre a galera e mostre seu carro.</p></div>
+            <div class="help-card"><b>COMÉRCIO</b><p>Chegue perto de um estabelecimento (MERCADO, PADARIA, FARMÁCIA...) e toque em AÇÃO para entrar. Dentro, vá até o balcão e toque em AÇÃO de novo para abrir as compras. O dinheiro, a fome e a vida aparecem no topo.</p></div>
+            <div class="help-card"><b>DICAS</b><p>O carro te leva mais longe. Use o celular para chamar seu veículo, rastrear missões e abrir o mapa. À noite, a cidade acende.</p></div>
+            <div class="help-card"><b>SEU PROGRESSO</b><p>Tudo fica salvo neste aparelho. No modo online, seu personagem aparece para outros jogadores com nome e visual.</p></div>
+          </div>
+          <button class="btn btn-primary wide" data-close-modal type="button">ENTENDI, BORA</button>
+        </div>
+      </div>
+
+      <div id="pause-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="panel pause-panel">
+          <div class="pause-mark">GHOST <em>CITY</em></div>
+          <h2>Pausa na cidade</h2>
+          <p>A maré espera por você.</p>
+          <button id="btn-resume" class="btn btn-primary wide" type="button">VOLTAR AO JOGO</button>
+          <div class="pause-actions">
+            <button data-open="settings" type="button">AJUSTES</button>
+            <button data-open="customize" type="button">PERSONAGEM</button>
+            <button data-open="help" type="button">COMO JOGAR</button>
+            <button id="btn-leave" type="button">SAIR PARA O MENU</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="chat-panel" class="chat-panel hidden">
+        <div class="chat-head"><span>CHAT DA CIDADE</span><button id="btn-chat-close" aria-label="Fechar chat">×</button></div>
+        <div id="chat-lines" class="chat-lines"></div>
+        <form id="chat-form" class="chat-form"><input id="chat-input" maxlength="140" placeholder="Manda no chat..." autocomplete="off" /><button type="submit">ENVIAR</button></form>
+      </div>
+
+      <div id="confirm-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="confirm-box"><h3 id="confirm-title">Tem certeza?</h3><p id="confirm-text">Essa ação não pode ser desfeita.</p><div class="confirm-actions"><button id="confirm-no" class="btn btn-secondary" type="button">CANCELAR</button><button id="confirm-yes" class="btn btn-primary" type="button">CONFIRMAR</button></div></div>
+      </div>
+    </div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

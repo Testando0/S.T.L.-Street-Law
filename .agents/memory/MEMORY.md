@@ -1,0 +1,1 @@
+- [RedRP and GhostCity identity](redrp-ghostcity.md) — RedRP is the game; GhostCity is a new city inspired by Valentine's Day.
