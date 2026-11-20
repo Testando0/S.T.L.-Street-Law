@@ -39,6 +39,7 @@ interface Pedestrian {
   panic: number;
   panicX: number;
   panicZ: number;
+  animAcc: number;
 }
 
 const SPAWN_RING_MIN = 42;
@@ -46,6 +47,8 @@ const SPAWN_RING_MAX = 128;
 const DESPAWN_EXTRA = 26;
 const VISIBLE_DIST = 80;
 const ANIM_DIST = 55;
+/** Acima dessa distancia o NPC anima em metade dos frames e esconde os olhos. */
+const FAR_ANIM_DIST = 24;
 const RENDER_CAP = 8;
 const SPAWN_BUDGET = 4;
 const HIT_REACH = 1.45;
@@ -65,6 +68,7 @@ export class PedestrianSystem {
   private dists: number[] = [];
   private candidates: number[] = [];
   private renderSet = new Set<number>();
+  private frame = 0;
 
   constructor(scene: THREE.Scene, world: World, quality: QualityName) {
     this.scene = scene;
@@ -138,6 +142,7 @@ export class PedestrianSystem {
       panic: 0,
       panicX: 0,
       panicZ: 0,
+      animAcc: 0,
     };
     ped.targetHeading = ped.heading;
     character.group.position.set(spot.x, 0, spot.z);
@@ -189,6 +194,7 @@ export class PedestrianSystem {
   }
 
   update(dt: number, focusX: number, focusZ: number) {
+    this.frame = (this.frame + 1) | 0;
     let budget = SPAWN_BUDGET;
     while (this.pool.length < this.activeCount && budget > 0) {
       if (!this.spawn(focusX, focusZ)) break;
@@ -309,7 +315,21 @@ export class PedestrianSystem {
       }
       group.position.set(p.x, 0, p.z);
 
-      if (dist < ANIM_DIST) character.update(dt, moving ? speed : 0);
+      if (dist < ANIM_DIST) {
+        const far = dist > FAR_ANIM_DIST;
+        character.setFar(far);
+        if (far) {
+          // longe: um frame sim, outro nao (acumula o dt para a animacao nao ficar lenta)
+          p.animAcc += dt;
+          if (((this.frame + i) & 1) === 0) {
+            character.update(p.animAcc, moving ? speed : 0);
+            p.animAcc = 0;
+          }
+        } else {
+          p.animAcc = 0;
+          character.update(dt, moving ? speed : 0);
+        }
+      }
     }
   }
 
