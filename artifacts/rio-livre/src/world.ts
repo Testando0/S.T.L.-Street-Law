@@ -339,6 +339,9 @@ export class World {
   private shopStaff = new Map<string, CharacterModel[]>();
   private shopHeights = new Map<string, number>();
   private shopLight = new THREE.PointLight(0xffe6bd, 0, 13, 2);
+  /** Luzes de ponto fixas (casas, letreiro). No modo leve ficam desligadas: cada luz custa em todo pixel. */
+  private houseLamps = new Map<string, THREE.PointLight>();
+  private glowLights: THREE.PointLight[] = [];
   private activeStaff: CharacterModel[] = [];
   /** Lojas funcionais descobertas nas fachadas que ja existiam na cidade. */
   public shops: CommerceSpec[] = [];
@@ -2141,6 +2144,8 @@ export class World {
 
     const lamp = new THREE.PointLight(0xffdca8, 14, 12, 2);
     lamp.position.set(spec.x, 2.9, back - s * (depth * 0.45));
+    lamp.visible = this.quality !== "low";
+    this.houseLamps.set(spec.id, lamp);
     this.buildingGroup.add(lamp);
 
     const panel = new THREE.Mesh(
@@ -2358,6 +2363,8 @@ export class World {
 
     const glow = new THREE.PointLight("#ff789f", 13, 22, 2);
     glow.position.set(cx, 4.6, cz + 1.6);
+    glow.visible = this.quality !== "low";
+    this.glowLights.push(glow);
     this.buildingGroup.add(glow);
 
     const planterMaterial = new THREE.MeshStandardMaterial({ color: "#422a38", roughness: 0.8 });
@@ -3361,7 +3368,27 @@ export class World {
     this.scene.add(island);
   }
 
+  /**
+   * No modo leve a luz do interior da casa e emprestada da `shopLight` (que ja existe e fica sempre ligada),
+   * entao o numero de luzes nunca muda e o shader nao recompila ao entrar/sair.
+   */
+  setActiveHouse(id: string | null) {
+    if (this.quality !== "low") return;
+    const lamp = id ? this.houseLamps.get(id) : undefined;
+    if (lamp) {
+      this.shopLight.position.copy(lamp.position);
+      this.shopLight.distance = lamp.distance;
+      this.shopLight.intensity = lamp.intensity;
+    } else if (!this.activeShopId) {
+      this.shopLight.intensity = 0;
+    }
+  }
+
   setQuality(quality: QualityName) {
+    this.quality = quality;
+    const lightsOn = quality !== "low";
+    for (const lamp of this.houseLamps.values()) lamp.visible = lightsOn;
+    for (const glow of this.glowLights) glow.visible = lightsOn;
     if (quality === "low") {
       if (this.ocean) this.ocean.visible = false;
       const buildingsGroup = (this as any).buildingGroup as THREE.Group | undefined;

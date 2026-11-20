@@ -73,12 +73,12 @@ export const QUALITY: Record<QualityName, QualityPreset> = {
   low: {
     name: "low",
     label: "Leve · A14 4 GB",
-    pixelRatio: 1.2,
+    pixelRatio: 1.0,
     antialias: true,
     shadows: false,
     shadowSize: 256,
-    drawDistance: 190,
-    cullingDistance: 180,
+    drawDistance: 150,
+    cullingDistance: 140,
     traffic: 5,
     people: 6,
     rain: false,
@@ -96,14 +96,14 @@ export const QUALITY: Record<QualityName, QualityPreset> = {
     shadowQuality: "off",
     textureQuality: "full",
     lodBias: 0.85,
-    fogStart: 85,
-    fogEnd: 220,
+    fogStart: 50,
+    fogEnd: 130,
     fogColor: "#a6c8e8",
     maxCars: 5,
     maxNPCs: 6,
     saturationBoost: 0.1,
     contrastBoost: 0.05,
-    maxLights: 4,
+    maxLights: 1,
     useBlobShadows: true,
     useAtlasMaterials: true,
     useObjectPooling: true,
@@ -332,9 +332,9 @@ export const getVehicle = (id: string) =>
   VEHICLES.find((v) => v.id === id) ?? VEHICLES[0]!;
 
 export const SKIN_TONES = ["#f3c9a6", "#dca57a", "#c98b5e", "#a86843", "#7a492f", "#4c2c1e"];
-export const SHIRT_COLORS = ["#ff6b35", "#f6c945", "#17b890", "#28a7e8", "#f25f8b", "#f4f1e8", "#343a59"];
-export const PANTS_COLORS = ["#1f3c5b", "#22252b", "#4b5563", "#7b4b2a", "#e8e2d3", "#2c6e63"];
-export const HAIR_COLORS = ["#17110d", "#3b2416", "#6b4428", "#c08948", "#e8d3a8", "#451f1f"];
+export const SHIRT_COLORS = ["#121212", "#ff6b35", "#f6c945", "#17b890", "#28a7e8", "#f25f8b", "#f4f1e8", "#343a59"];
+export const PANTS_COLORS = ["#16171a", "#1f3c5b", "#22252b", "#4b5563", "#7b4b2a", "#e8e2d3", "#2c6e63"];
+export const HAIR_COLORS = ["#0e0b0a", "#17110d", "#3b2416", "#6b4428", "#c08948", "#e8d3a8", "#451f1f"];
 export const PAINT_COLORS = ["#f6c945", "#e23b3b", "#2f80c9", "#f4f4ee", "#172026", "#17a67c", "#f27b35", "#8e5cc4"];
 
 export const XP_PER_LEVEL = [0, 220, 560, 1100, 1900, 3000, 4500, 6500, 9200, 12600, 17000];

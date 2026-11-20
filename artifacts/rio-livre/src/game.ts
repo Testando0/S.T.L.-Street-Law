@@ -48,6 +48,7 @@ import { UIManager, type UICallbacks } from "./ui";
 import { Rng, angleLerp, clamp, damp, dist2 } from "./util";
 import { PoliceCar, TrafficVehicle, Vehicle, randomTrafficSpec } from "./vehicles";
 import { World } from "./world";
+import { setTextureQuality } from "./textures";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -136,7 +137,10 @@ export class Game {
     this.canvas = canvas;
     this.profile = loadProfile();
     this.camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 1600);
-    this.player = new CharacterModel(this.profile.skin, this.profile.shirt, this.profile.pants, this.profile.hair);
+    this.player = new CharacterModel(this.profile.skin, this.profile.shirt, this.profile.pants, this.profile.hair, "", {
+      tattoos: true,
+      model: true,
+    });
     this.player.setContactShadow(QUALITY[this.profile.settings.quality].useBlobShadows);
     this.player.group.visible = false;
     this.player.group.userData.noMerge = true;
@@ -188,6 +192,7 @@ export class Game {
     }
     this.ui.setLoading(17, "Esculpindo morros e avenidas...");
     await this.nextFrame();
+    setTextureQuality(this.profile.settings.quality === "low");
     this.world = new World(this.scene, this.profile.settings.quality);
     this.world.registerStaticCullables(this.culler);
     this.ui.setLoading(39, "Acendendo os postes da orla...");
@@ -749,6 +754,7 @@ export class Game {
     this.cameraYaw = house.facing === "north" ? 0 : Math.PI;
     this.cameraPitch = 0.22;
     this.houseInterior = house;
+    this.world.setActiveHouse(house.id);
     this.updateCamera(1, true);
     this.ui.toast(`Você entrou em ${house.name}`, "Dormir na cama recupera vida. O guarda-roupa troca o visual.", "info");
   }
@@ -759,6 +765,7 @@ export class Game {
     const door = houseDoor(house);
     const spot = this.world.findFreeSpot(door.x, door.z, 0.6);
     this.houseInterior = null;
+    this.world.setActiveHouse(null);
     this.pos.set(spot.x, 0, spot.z);
     this.player.group.position.set(spot.x, 0, spot.z);
     this.player.group.rotation.y = 0;
@@ -784,6 +791,7 @@ export class Game {
       if (insideHouse(this.houseInterior, this.pos.x, this.pos.z)) return;
       const house = this.houseInterior;
       this.houseInterior = null;
+      this.world.setActiveHouse(null);
       this.player.setVisible(!this.currentVehicle);
       this.cameraPitch = 0.36;
       this.ui.toast("De volta à rua", `Você saiu de ${house.name}.`, "info");
@@ -1314,6 +1322,7 @@ export class Game {
     this.world.setActiveShop(null);
     this.interior = null;
     this.houseInterior = null;
+    this.world.setActiveHouse(null);
     this.pos.set(spot.x, 0, spot.z);
     this.player.group.position.set(spot.x, 0, spot.z);
     this.player.group.rotation.x = 0;
@@ -1540,7 +1549,8 @@ export class Game {
     this.fpsFrames++;
     if (this.fpsTimer >= 0.5) {
       const fps = this.fpsFrames / this.fpsTimer;
-      this.ui.setFps(fps);
+      const info = this.renderer?.info.render;
+      this.ui.setFps(fps, info ? `${info.calls} draws · ${Math.round(info.triangles / 1000)}k tri` : "");
       this.fpsTimer = 0;
       this.fpsFrames = 0;
       if (this.renderer && !this.paused) {
