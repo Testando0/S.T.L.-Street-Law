@@ -35,7 +35,7 @@ const CHEST_REL = 0.185; // base do torso acima do quadril
 const NECK_REL = 0.555; // pescoco acima da base do torso
 const HEAD_REL = 0.73; // centro da cabeca acima da base do torso
 const SHOULDER_REL = 0.45; // ombro acima da base do torso
-const SHOULDER_X = 0.235;
+const SHOULDER_X = 0.26;
 const ELBOW_Y = -0.37;
 const LABEL_Y = 2.38;
 const LAND_TIME = 0.34;
@@ -50,21 +50,24 @@ const R = {
   hair: 3,
   shoe: 4,
   sole: 5,
-  belt: 6,
-  buckle: 7,
+  tattoo: 6,
+  stud: 7,
   eyeWhite: 8,
   iris: 9,
   pupil: 10,
   mouth: 11,
   lip: 12,
   earIn: 13,
+  chain: 14,
+  fade: 15,
 } as const;
-const REGION_COUNT = 14;
+const REGION_COUNT = 16;
 const FIXED_COLORS: Record<number, string> = {
-  [R.shoe]: "#f4f1e9",
-  [R.sole]: "#dcd7cc",
-  [R.belt]: "#2b2119",
-  [R.buckle]: "#c9a34a",
+  [R.shoe]: "#f6f5f1",
+  [R.sole]: "#e4e1d8",
+  [R.tattoo]: "#4a403b",
+  [R.stud]: "#d5d9e0",
+  [R.chain]: "#c4c9d2",
   [R.eyeWhite]: "#eae3d8",
   [R.iris]: "#4b3626",
   [R.pupil]: "#140d0a",
@@ -92,6 +95,7 @@ const _e = new THREE.Euler();
 const _p = new THREE.Vector3();
 const _s = new THREE.Vector3();
 const _c = new THREE.Color();
+const _f = new THREE.Color();
 
 const bake = (parts: Part[]): THREE.BufferGeometry => {
   const geos: THREE.BufferGeometry[] = [];
@@ -147,60 +151,85 @@ interface Templates {
   upper: THREE.BufferGeometry;
   fore: [THREE.BufferGeometry, THREE.BufferGeometry];
 }
-let templates: Templates | null = null;
+const templateCache: { ink?: Templates; plain?: Templates } = {};
 
 const cap = (r: number, len: number) => new THREE.CapsuleGeometry(r, len, 4, 10);
 const sph = (r: number, w = 14, h = 10) => new THREE.SphereGeometry(r, w, h);
 const box = (x: number, y: number, z: number) => new THREE.BoxGeometry(x, y, z);
 const cyl = (rt: number, rb: number, h: number, seg = 14) => new THREE.CylinderGeometry(rt, rb, h, seg);
+const cone = (r: number, h: number) => new THREE.ConeGeometry(r, h, 5);
+
+const ink = (p: V3, s: V3): Part => ({ g: sph(0.02, 8, 6), r: R.tattoo, p, s, shade: 0.95 });
 
 const buildHead = (): THREE.BufferGeometry => {
   const parts: Part[] = [];
   parts.push({ g: sph(0.155, 24, 16), r: R.skin, s: [0.95, 1.06, 0.98], grad: [0.88, 1.04] });
-  parts.push({ g: sph(0.125, 20, 14), r: R.skin, p: [0, -0.06, 0.018], s: [0.86, 0.74, 0.92], grad: [0.9, 1] });
+  parts.push({ g: sph(0.125, 20, 14), r: R.skin, p: [0, -0.062, 0.018], s: [0.96, 0.78, 0.94], grad: [0.9, 1] });
+  parts.push({ g: sph(0.05, 10, 8), r: R.skin, p: [-0.088, -0.095, 0.05], s: [1, 0.8, 0.9], shade: 0.97 });
+  parts.push({ g: sph(0.05, 10, 8), r: R.skin, p: [0.088, -0.095, 0.05], s: [1, 0.8, 0.9], shade: 0.97 });
   for (const x of [-0.148, 0.148]) {
     parts.push({ g: sph(0.045, 10, 8), r: R.skin, p: [x, -0.005, -0.01], s: [0.4, 0.9, 0.72] });
     parts.push({ g: sph(0.022, 8, 6), r: R.earIn, p: [x + (x < 0 ? -0.012 : 0.012), -0.005, -0.012], s: [0.32, 0.8, 0.6] });
+    parts.push({ g: sph(0.0105, 8, 6), r: R.stud, p: [x * 1.04, -0.034, -0.004] });
+    parts.push({ g: sph(0.0085, 8, 6), r: R.stud, p: [x * 1.02, 0.012, -0.012] });
   }
-  parts.push({ g: sph(0.033, 12, 9), r: R.skin, p: [0, -0.035, 0.146], s: [0.66, 1.0, 1.12] });
-  parts.push({ g: sph(0.024, 10, 8), r: R.skin, p: [0, -0.05, 0.155], s: [0.9, 0.7, 0.95] });
+  parts.push({ g: sph(0.033, 12, 9), r: R.skin, p: [0, -0.035, 0.146], s: [0.7, 1.0, 1.12] });
+  parts.push({ g: sph(0.025, 10, 8), r: R.skin, p: [0, -0.05, 0.155], s: [1, 0.7, 0.95] });
   for (const x of [-0.062, 0.062]) {
-    // palpebras: dao o olhar "pesado" do modelo original
     const lid = new THREE.SphereGeometry(0.034, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.5);
     parts.push({ g: lid, r: R.skin, p: [x, 0.017, 0.112], q: [0.55, 0, 0] });
     const lower = new THREE.SphereGeometry(0.036, 10, 6, 0, Math.PI * 2, Math.PI * 0.6, Math.PI * 0.4);
     parts.push({ g: lower, r: R.skin, p: [x, 0.013, 0.112], q: [-0.4, 0, 0], shade: 0.95 });
     parts.push({
-      g: box(0.062, 0.015, 0.02),
+      g: box(0.07, 0.021, 0.022),
       r: R.hair,
-      p: [x * 1.03, 0.052, 0.138],
-      q: [-0.16, 0, x < 0 ? -0.1 : 0.1],
-      shade: 0.85,
+      p: [x * 1.03, 0.054, 0.138],
+      q: [-0.16, 0, x < 0 ? -0.12 : 0.12],
+      shade: 0.8,
     });
   }
+  parts.push({ g: sph(0.0075, 6, 5), r: R.stud, p: [0.086, 0.05, 0.134] });
   parts.push({ g: box(0.072, 0.012, 0.014), r: R.mouth, p: [0, -0.098, 0.117], q: [0.12, 0, 0] });
   parts.push({ g: sph(0.042, 12, 8), r: R.lip, p: [0, -0.112, 0.106], s: [0.92, 0.3, 0.42] });
-  parts.push({ g: sph(0.036, 10, 8), r: R.skin, p: [0, -0.15, 0.086], s: [1, 0.6, 0.75] });
+  parts.push({ g: sph(0.038, 10, 8), r: R.skin, p: [0, -0.15, 0.088], s: [1.1, 0.62, 0.78] });
 
-  // cabelo
   parts.push({
-    g: new THREE.SphereGeometry(0.163, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.52),
+    g: new THREE.SphereGeometry(0.163, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.5),
     r: R.hair,
-    p: [0, 0.004, -0.006],
-    s: [0.94, 1.05, 0.97],
-    q: [-0.1, 0, 0],
-    grad: [0.9, 1.08],
+    p: [0, 0.008, -0.012],
+    s: [0.94, 1.04, 0.97],
+    q: [-0.12, 0, 0],
+    grad: [0.9, 1.1],
   });
-  parts.push({ g: sph(0.156, 18, 12), r: R.hair, p: [0, -0.03, -0.058], s: [0.98, 0.95, 0.72], grad: [0.78, 1] });
-  for (const [tx, tz, rz] of [
-    [-0.058, 0.082, 0.32],
-    [0.006, 0.096, 0.05],
-    [0.062, 0.078, -0.3],
-  ] as const) {
-    parts.push({ g: sph(0.078, 10, 8), r: R.hair, p: [tx, 0.106, tz], s: [1.15, 0.42, 0.6], q: [-0.45, 0, rz], shade: 1.08 });
+  parts.push({ g: sph(0.156, 18, 12), r: R.fade, p: [0, -0.03, -0.05], s: [0.99, 0.92, 0.76], grad: [0.8, 1] });
+  for (const x of [-0.143, 0.143]) {
+    parts.push({ g: box(0.022, 0.085, 0.06), r: R.fade, p: [x, -0.02, 0.02], q: [0, 0, x < 0 ? 0.08 : -0.08], shade: 0.95 });
   }
-  for (const x of [-0.14, 0.14]) {
-    parts.push({ g: box(0.026, 0.095, 0.05), r: R.hair, p: [x, -0.04, 0.028], q: [0, 0, x < 0 ? 0.1 : -0.1], shade: 0.9 });
+  for (const [tx, tz, rz] of [
+    [-0.06, 0.07, 0.3],
+    [0.0, 0.082, 0.04],
+    [0.064, 0.068, -0.28],
+    [-0.02, 0.0, 0.1],
+    [0.03, -0.03, -0.1],
+  ] as const) {
+    parts.push({ g: sph(0.08, 10, 8), r: R.hair, p: [tx, 0.112, tz], s: [1.15, 0.5, 0.64], q: [-0.4, 0, rz], shade: 1.08 });
+  }
+  for (const [x, rz] of [
+    [-0.088, 0.35],
+    [-0.046, 0.14],
+    [-0.008, -0.05],
+    [0.034, 0.12],
+    [0.074, -0.3],
+    [0.108, -0.5],
+  ] as const) {
+    parts.push({
+      g: cone(0.023, 0.08),
+      r: R.hair,
+      p: [x, 0.083, 0.132 - Math.abs(x) * 0.45],
+      q: [Math.PI - 0.38, 0, rz],
+      s: [1.3, 1, 0.55],
+      shade: 1.05,
+    });
   }
   return bake(parts);
 };
@@ -215,78 +244,114 @@ const buildEyes = (): THREE.BufferGeometry => {
   return bake(parts);
 };
 
-const buildTorso = (): THREE.BufferGeometry => {
+const buildTorso = (tattoos: boolean): THREE.BufferGeometry => {
   const profile = [
-    new THREE.Vector2(0.175, 0),
-    new THREE.Vector2(0.19, 0.06),
-    new THREE.Vector2(0.205, 0.14),
-    new THREE.Vector2(0.215, 0.26),
-    new THREE.Vector2(0.22, 0.34),
-    new THREE.Vector2(0.212, 0.42),
-    new THREE.Vector2(0.185, 0.47),
-    new THREE.Vector2(0.13, 0.5),
-    new THREE.Vector2(0.06, 0.515),
+    new THREE.Vector2(0.2, 0),
+    new THREE.Vector2(0.21, 0.06),
+    new THREE.Vector2(0.22, 0.14),
+    new THREE.Vector2(0.225, 0.26),
+    new THREE.Vector2(0.235, 0.34),
+    new THREE.Vector2(0.23, 0.42),
+    new THREE.Vector2(0.2, 0.47),
+    new THREE.Vector2(0.14, 0.5),
+    new THREE.Vector2(0.065, 0.515),
     new THREE.Vector2(0.0, 0.515),
   ];
   const parts: Part[] = [
-    { g: new THREE.LatheGeometry(profile, 22), r: R.shirt, s: [1, 1, 0.72], grad: [0.8, 1.02] },
-    { g: new THREE.TorusGeometry(0.082, 0.02, 6, 16), r: R.shirt, p: [0, 0.5, 0], q: [Math.PI / 2, 0, 0], s: [1, 1, 0.75], shade: 0.85 },
-    { g: cyl(0.056, 0.07, 0.17, 12), r: R.skin, p: [0, NECK_REL, 0], shade: 0.92 },
+    { g: new THREE.LatheGeometry(profile, 22), r: R.shirt, s: [1.05, 1, 0.74], grad: [0.82, 1.04] },
+    { g: new THREE.TorusGeometry(0.086, 0.019, 6, 16), r: R.shirt, p: [0, 0.5, 0.004], q: [Math.PI / 2, 0, 0], s: [1, 1, 0.8], shade: 0.8 },
+    { g: cyl(0.056, 0.07, 0.17, 12), r: R.skin, p: [0, NECK_REL, 0], s: [1.04, 1, 1], shade: 0.92 },
+    { g: new THREE.TorusGeometry(0.073, 0.0055, 5, 18), r: R.chain, p: [0, 0.53, 0.004], q: [Math.PI / 2, 0, 0], s: [1, 1, 0.92] },
   ];
+  if (tattoos) {
+    parts.push(
+      ink([0.058, 0.55, 0.022], [0.5, 1.9, 1.1]),
+      ink([-0.057, 0.57, 0.028], [0.5, 1.6, 1.0]),
+      ink([0.034, 0.56, 0.056], [1.1, 1.3, 0.5]),
+      ink([-0.022, 0.575, 0.052], [0.9, 1.5, 0.5]),
+      ink([0.0, 0.56, -0.058], [1.3, 1.1, 0.5]),
+    );
+  }
   return bake(parts);
 };
 
 const buildPelvis = (): THREE.BufferGeometry =>
   bake([
-    { g: cap(0.17, 0.06), r: R.pants, p: [0, 0.06, 0], s: [1.18, 1, 0.8], grad: [0.8, 1] },
-    { g: cyl(0.2, 0.2, 0.048, 20), r: R.belt, p: [0, 0.135, 0], s: [1, 1, 0.67] },
-    { g: box(0.052, 0.04, 0.022), r: R.buckle, p: [0, 0.135, 0.137] },
+    { g: cap(0.17, 0.06), r: R.pants, p: [0, 0.06, 0], s: [1.25, 1, 0.86], grad: [0.8, 1] },
+    { g: cyl(0.225, 0.238, 0.27, 22), r: R.shirt, p: [0, 0.095, 0], s: [1.05, 1, 0.76], grad: [0.84, 1] },
   ]);
 
 const buildThigh = (): THREE.BufferGeometry =>
-  bake([{ g: cap(0.095, 0.26), r: R.pants, p: [0, -0.225, 0], s: [1, 1, 0.95], grad: [0.86, 1.04] }]);
+  bake([{ g: cap(0.12, 0.22), r: R.pants, p: [0, -0.225, 0], s: [1, 1, 0.95], grad: [0.84, 1.04] }]);
 
 const buildShin = (): THREE.BufferGeometry =>
-  bake([{ g: cap(0.072, 0.28), r: R.pants, p: [0, -0.212, 0], s: [1, 1, 0.95], grad: [0.82, 1] }]);
+  bake([
+    { g: cap(0.105, 0.2), r: R.pants, p: [0, -0.2, 0], s: [1, 1, 0.95], grad: [0.8, 1] },
+    { g: cyl(0.108, 0.128, 0.1, 16), r: R.pants, p: [0, -0.345, 0], s: [1, 1, 0.96], shade: 0.9 },
+  ]);
 
 const buildFoot = (): THREE.BufferGeometry =>
   bake([
-    { g: cap(0.072, 0.16), r: R.shoe, p: [0, 0.01, 0.05], q: [Math.PI / 2, 0, 0], s: [1.06, 0.92, 1] },
-    { g: box(0.072, 0.028, 0.1), r: R.shoe, p: [0, 0.058, 0.115], q: [-0.32, 0, 0] },
-    { g: box(0.17, 0.04, 0.3), r: R.sole, p: [0, -0.052, 0.05] },
+    { g: cap(0.075, 0.15), r: R.shoe, p: [0, 0.01, 0.05], q: [Math.PI / 2, 0, 0], s: [1.1, 0.95, 1] },
+    { g: box(0.1, 0.045, 0.11), r: R.shoe, p: [0, 0.045, 0.12], q: [-0.25, 0, 0] },
+    { g: box(0.1, 0.07, 0.07), r: R.shoe, p: [0, 0.07, -0.04] },
+    { g: box(0.19, 0.05, 0.3), r: R.sole, p: [0, -0.047, 0.05] },
   ]);
 
-const buildUpperArm = (): THREE.BufferGeometry =>
-  bake([
-    { g: cap(0.077, 0.075), r: R.shirt, p: [0, -0.06, 0], s: [1, 1, 0.96], grad: [0.88, 1.02] },
-    { g: cyl(0.078, 0.078, 0.028, 14), r: R.shirt, p: [0, -0.162, 0], shade: 0.85 },
+const buildUpperArm = (tattoos: boolean): THREE.BufferGeometry => {
+  const parts: Part[] = [
+    { g: cap(0.1, 0.1), r: R.shirt, p: [0, -0.06, 0], grad: [0.86, 1.04] },
+    { g: cyl(0.103, 0.103, 0.03, 14), r: R.shirt, p: [0, -0.205, 0], shade: 0.85 },
     { g: cap(0.055, 0.26), r: R.skin, p: [0, -0.185, 0], s: [1, 1, 0.96], grad: [0.88, 1] },
-  ]);
+  ];
+  if (tattoos) {
+    parts.push(
+      ink([0.0, -0.29, 0.052], [1.2, 1.8, 0.45]),
+      ink([0.052, -0.3, 0.0], [0.45, 1.6, 1.0]),
+      ink([-0.052, -0.27, 0.0], [0.45, 1.4, 1.0]),
+    );
+  }
+  return bake(parts);
+};
 
-const buildForearm = (side: -1 | 1): THREE.BufferGeometry =>
-  bake([
+const buildForearm = (side: -1 | 1, tattoos: boolean): THREE.BufferGeometry => {
+  const parts: Part[] = [
     { g: cap(0.047, 0.2), r: R.skin, p: [0, -0.147, 0], s: [1, 1, 0.94], grad: [0.9, 1] },
     { g: cyl(0.038, 0.044, 0.05, 10), r: R.skin, p: [0, -0.3, 0] },
     { g: sph(0.052, 10, 8), r: R.skin, p: [0, -0.335, 0], s: [0.74, 1.15, 0.56] },
     { g: cap(0.016, 0.03), r: R.skin, p: [-side * 0.036, -0.325, 0.014], q: [0.35, 0, side * 0.45] },
     { g: cap(0.0135, 0.05), r: R.skin, p: [0, -0.378, 0.012], q: [-0.28, 0, 0], s: [2.2, 1, 0.9], shade: 0.95 },
-  ]);
+  ];
+  if (tattoos) {
+    parts.push(
+      ink([side * 0.04, -0.06, 0.005], [0.45, 2.2, 1.1]),
+      ink([side * 0.039, -0.15, 0.01], [0.45, 1.5, 1.0]),
+      ink([0.005, -0.1, 0.042], [1.2, 2.0, 0.45]),
+      ink([-side * 0.01, -0.21, 0.04], [1.0, 1.5, 0.45]),
+      ink([side * 0.02, -0.24, -0.038], [1.0, 1.4, 0.45]),
+    );
+  }
+  return bake(parts);
+};
 
-const getTemplates = (): Templates => {
-  if (!templates) {
-    templates = {
+const getTemplates = (tattoos: boolean): Templates => {
+  const key = tattoos ? "ink" : "plain";
+  let t = templateCache[key];
+  if (!t) {
+    t = {
       head: buildHead(),
       eyes: buildEyes(),
-      torso: buildTorso(),
+      torso: buildTorso(tattoos),
       pelvis: buildPelvis(),
       thigh: buildThigh(),
       shin: buildShin(),
       foot: buildFoot(),
-      upper: buildUpperArm(),
-      fore: [buildForearm(-1), buildForearm(1)],
+      upper: buildUpperArm(tattoos),
+      fore: [buildForearm(-1, tattoos), buildForearm(1, tattoos)],
     };
+    templateCache[key] = t;
   }
-  return templates;
+  return t;
 };
 
 let sharedMaterial: THREE.MeshStandardMaterial | null = null;
@@ -367,7 +432,7 @@ export class CharacterModel {
   private elbows: THREE.Group[] = [];
   private parts: { geo: THREE.BufferGeometry; base: THREE.BufferGeometry }[] = [];
   private palette = new Float32Array(REGION_COUNT * 3);
-  private colors = { skin: "#c98b5e", shirt: "#ff6b35", pants: "#1f3c5b", hair: "#17110d" };
+  private colors = { skin: "#dca57a", shirt: "#121212", pants: "#16171a", hair: "#0e0b0a" };
 
   private cycle = Math.random();
   private idleTime = Math.random() * 20;
@@ -394,10 +459,17 @@ export class CharacterModel {
   private footL: FootSample = { z: 0, lift: 0, pitch: 0, stance: true };
   private footR: FootSample = { z: 0, lift: 0, pitch: 0, stance: true };
 
-  constructor(skin = "#c98b5e", shirt = "#ff6b35", pants = "#1f3c5b", hair = "#17110d", label = "") {
+  constructor(
+    skin = "#dca57a",
+    shirt = "#121212",
+    pants = "#16171a",
+    hair = "#0e0b0a",
+    label = "",
+    opts: { tattoos?: boolean } = {},
+  ) {
     this.colors = { skin, shirt, pants, hair };
     this.rebuildPalette();
-    const t = getTemplates();
+    const t = getTemplates(!!opts.tattoos);
 
     this.hips = new THREE.Group();
     this.hips.position.y = HIPS_STAND;
@@ -407,7 +479,7 @@ export class CharacterModel {
     // pernas: coxa -> joelho -> canela -> tornozelo -> pe
     for (const side of [-1, 1] as const) {
       const leg = new THREE.Group();
-      leg.position.x = side * 0.095;
+      leg.position.x = side * 0.105;
       leg.rotation.order = "YXZ"; // permite desfazer a guinada do quadril sem entortar a perna
       leg.add(this.spawnMesh(t.thigh));
       const knee = new THREE.Group();
@@ -489,6 +561,12 @@ export class CharacterModel {
     set(R.pants, this.colors.pants);
     set(R.hair, this.colors.hair);
     for (const key of Object.keys(FIXED_COLORS)) set(Number(key), FIXED_COLORS[Number(key)]!);
+    _c.set(this.colors.hair);
+    _f.set(this.colors.skin);
+    _c.lerp(_f, 0.4);
+    this.palette[R.fade * 3] = _c.r;
+    this.palette[R.fade * 3 + 1] = _c.g;
+    this.palette[R.fade * 3 + 2] = _c.b;
   }
 
   private paint(geo: THREE.BufferGeometry, base: THREE.BufferGeometry) {
