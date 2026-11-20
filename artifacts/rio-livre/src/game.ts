@@ -99,6 +99,11 @@ export class Game {
   private renderScale = 1;
   /** Multiplicador adaptativo (0.6..1) aplicado sobre a escala do preset. */
   private renderScaleFactor = 1;
+  private lobbyStage: "cover" | "lobby" = "cover";
+  private lobbyBlend = 0;
+  private lobbyPos = new THREE.Vector3(34, 0, -10);
+  private lobbyRy = 0;
+  private cullScale = 1;
   private basePixelRatio = 1;
   private badSamples = 0;
   private goodSamples = 0;
@@ -221,6 +226,7 @@ export class Game {
     this.ui.setLoading(96, "Preparando os primeiros passos...");
     await this.nextFrame();
     this.lastTime = performance.now();
+    this.enterLobby("cover");
     this.updateMenuCamera(0, true);
     this.ui.finishLoading();
     requestAnimationFrame(this.tick);
@@ -229,6 +235,10 @@ export class Game {
   private callbacks(): UICallbacks {
     return {
       onPlay: (online) => this.startGame(online),
+      onCoverEnter: () => {
+        this.audio.unlock().catch(() => undefined);
+        this.lobbyStage = "lobby";
+      },
       onModalOpen: (name) => this.handleModalOpen(name),
       onModalClose: () => this.handleModalClose(),
       onMissionTrack: (id) => this.trackMission(id),
@@ -455,6 +465,8 @@ export class Game {
     if (this.mode === "playing") return;
     this.audio.unlock().catch(() => undefined);
     this.mode = "playing";
+    this.player.group.position.copy(this.pos);
+    this.player.group.rotation.y = this.lobbyRy;
     this.paused = false;
     this.modalPaused = false;
     this.dead = false;
@@ -511,7 +523,6 @@ export class Game {
     this.paused = false;
     this.modalPaused = false;
     this.input.setEnabled(false);
-    this.player.setVisible(false);
     this.audio.setEngine(false);
     this.audio.setSiren(false);
     this.sirenActive = false;
@@ -522,6 +533,7 @@ export class Game {
     this.ui.setPrompt("", null);
     this.ui.showMenu();
     this.persist();
+    this.enterLobby("lobby");
     this.updateMenuCamera(0, true);
   }
 
@@ -1460,21 +1472,35 @@ export class Game {
     this.camera.lookAt(this.cameraLook);
   }
 
+  private enterLobby(stage: "cover" | "lobby") {
+    this.lobbyStage = stage;
+    this.lobbyRy = this.player.group.rotation.y;
+    const spot = this.world.findFreeSpot(34, -10, 5);
+    this.lobbyPos.set(spot.x, 0, spot.z);
+    this.player.group.rotation.x = 0;
+    this.player.jumpVelocity = 0;
+    this.player.group.position.copy(this.lobbyPos);
+    this.player.setVisible(true);
+  }
+
   private updateMenuCamera(dt: number, snap = false) {
-    const radius = 104;
-    const angle = this.elapsed * 0.035 + 0.9;
-    this.focus.set(34, 9, -10);
-    const x = 34 + Math.cos(angle) * radius;
-    const z = -10 + Math.sin(angle) * radius;
-    const y = 48 + Math.sin(this.elapsed * 0.11) * 6;
-    this.cameraDesired.set(x, y, z);
-    if (snap) this.camera.position.copy(this.cameraDesired);
-    else this.camera.position.lerp(this.cameraDesired, 1 - Math.exp(-0.8 * dt));
+    const goal = this.lobbyStage === "lobby" ? 1 : 0;
+    this.lobbyBlend = snap ? goal : this.lobbyBlend + (goal - this.lobbyBlend) * (1 - Math.exp(-2.4 * dt));
+    const b = this.lobbyBlend;
+    const a = 0.55 + Math.sin(this.elapsed * 0.2) * 0.12;
+    const p = this.lobbyPos;
+    const dist = 4.7 - 1.9 * b;
+    this.camera.position.set(p.x + Math.sin(a) * dist, 0.85 + 0.45 * b, p.z + Math.cos(a) * dist);
+    const shift = 1.15 * b;
+    this.focus.set(p.x - Math.cos(a) * shift, 1.9 - 0.92 * b, p.z + Math.sin(a) * shift);
     this.camera.lookAt(this.focus);
-    this.environment.setFocus(34, -10);
+    this.player.group.position.copy(p);
+    this.player.group.rotation.y = a - 0.5 * b;
+    if (dt > 0) this.player.update(dt, 0, true);
+    this.environment.setFocus(p.x, p.z);
     this.environment.update(dt, this.focus, this.camera);
     this.world.update(dt, this.elapsed);
-    this.pedestrians.update(dt, 34, -10);
+    this.pedestrians.update(dt, p.x, p.z);
     if (Math.abs(this.environment.night - this.lastNight) > 0.004) {
       this.lastNight = this.environment.night;
       this.world.setNight(this.environment.night);
@@ -1559,11 +1585,11 @@ export class Game {
         const target = this.frameLimiter.targetFPS;
         const lowWater = Math.max(18, target * 0.82);
         const highWater = Math.max(lowWater + 1, target * 0.97);
-        const minRenderScale = this.profile.settings.quality === "low" ? 0.85 : 0.9;
+        const minRenderScale = this.profile.settings.quality === "low" ? 0.75 : 0.85;
         if (fps < lowWater) {
           this.goodSamples = 0;
           if (this.renderScaleFactor > minRenderScale) {
-            this.renderScaleFactor = Math.max(minRenderScale, this.renderScaleFactor - 0.05);
+            this.renderScaleFactor = Math.max(minRenderScale, this.renderScaleFactor - 0.1);
             this.applyRenderScale();
           }
           this.badSamples++;
@@ -1578,6 +1604,12 @@ export class Game {
             } else if (this.renderScaleFactor > minRenderScale) {
               this.renderScaleFactor = minRenderScale;
               this.applyRenderScale();
+            } else if (this.cullScale > 0.55) {
+              this.cullScale = Math.max(0.55, this.cullScale - 0.15);
+              const base = QUALITY[this.profile.settings.quality].cullingDistance ?? PERF.cullDistance;
+              this.culler.setDistance(base * this.cullScale);
+            } else if (this.player.hasModel) {
+              this.player.setModelEnabled(false);
             }
           }
         } else if (fps > highWater) {
@@ -1669,7 +1701,7 @@ export class Game {
       this.ui.setPrompt(prompt?.key ?? "", prompt?.text ?? null);
     }
     this.minimapTimer += dt;
-    if (this.minimapTimer > 0.12) {
+    if (this.minimapTimer > (this.profile.settings.quality === "low" ? 0.3 : 0.12)) {
       this.minimapTimer = 0;
       const markers = this.missions.getMarkers();
       markers.push({ x: GARAGE.x, z: GARAGE.z, color: "#ffd166", label: "Garagem" });
@@ -1696,7 +1728,7 @@ export class Game {
         {
           x: this.pos.x,
           z: this.pos.z,
-          ry: this.currentVehicle ? this.currentVehicle.rotation : this.player.group.rotation.y,
+          ry: this.currentVehicle ? this.currentVehicle.rotation : this.mode === "playing" ? this.player.group.rotation.y : this.lobbyRy,
           vehicle: Boolean(this.currentVehicle),
         },
         markers,
@@ -1730,7 +1762,7 @@ export class Game {
     }
     this.remote.updateAll(dt);
     this.updateHud(dt);
-    this.culler.update(dt, this.pos);
+    this.culler.update(dt, this.mode === "playing" ? this.pos : this.lobbyPos);
     if (this.post?.active) this.post.render(dt);
     else this.renderer.render(this.scene, this.camera);
   };

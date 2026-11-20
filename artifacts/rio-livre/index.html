@@ -4,20 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#071b1e" />
-    <meta name="description" content="S.T.L. — Street Law é um jogo mobile 3D de mundo aberto. Explore GhostCity, encare a cidade e escreva sua própria história." />
+    <meta name="description" content="RedRP é um jogo mobile 3D de mundo aberto. Explore GhostCity, uma cidade carioca inspirada no Dia dos Namorados, e escreva sua própria história." />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="./icon-192.png" />
-    <title>S.T.L. — Street Law · GhostCity</title>
+    <title>RedRP — GhostCity, cidade do amor</title>
     <script>
       window.__RIO_APK__ = false;
       window.__RIO_DEFAULT_SERVER__ = "";
     </script>
   </head>
   <body>
-    <div id="app" style="--stl-cover: url('./stl-cover.png');">
+    <div id="app">
       <canvas id="scene" aria-label="Mundo aberto RedRP na cidade GhostCity"></canvas>
       <div class="vignette"></div>
       <div class="sun-glare"></div>
@@ -34,35 +34,19 @@
         <div class="loading-footer">UMA CIDADE FUNDADA COM AMOR · EM HOMENAGEM AO NATHAN</div>
       </div>
 
-      <div id="opening-screen" class="screen opening-screen hidden" aria-label="Abertura S.T.L. Street Law">
-        <div class="opening-backdrop"></div>
-        <div class="opening-grain"></div>
-        <div class="opening-topline"><span></span> S.T.L. / STREET LAW <span></span></div>
-        <div class="opening-copy">
-          <p class="opening-kicker">GHOSTCITY · TEMPORADA 01</p>
-          <h1>S.T.L.<em> //</em></h1>
-          <p class="opening-title">STREET LAW</p>
-          <p class="opening-subtitle">A cidade é sua. A rua também.</p>
+      <div id="cover" class="screen cover-screen hidden">
+        <div class="cover-top">
+          <span class="cover-kicker">TEMPORADA 01 · MARÉ DE HISTÓRIAS</span>
+          <h1 class="cover-title">RED<em>RP</em></h1>
+          <p class="cover-sub">GhostCity · a cidade do amor</p>
         </div>
-        <div class="opening-bottom">
-          <div class="opening-progress"><span></span></div>
-          <div class="opening-meta"><span>UMA NOVA HISTÓRIA ESTÁ COMEÇANDO</span><b>ENTRANDO NO LOBBY</b></div>
-          <button id="btn-skip-opening" class="opening-skip" type="button">PULAR ABERTURA <span>›</span></button>
+        <div class="cover-bottom">
+          <button id="btn-cover-start" class="cover-start" type="button">TOQUE PARA ENTRAR</button>
+          <span class="cover-foot">EM HOMENAGEM AO NATHAN</span>
         </div>
-        <button id="btn-enter-lobby" class="opening-enter" type="button">ENTRAR NO LOBBY <span>→</span></button>
       </div>
 
       <div id="menu" class="screen menu-screen hidden">
-        <div class="menu-sun"></div>
-        <div class="menu-cloud c1"></div>
-        <div class="menu-cloud c2"></div>
-        <div class="menu-cloud c3"></div>
-        <div class="menu-hills">
-          <div class="hill hill-a"></div>
-          <div class="hill hill-b"></div>
-          <div class="hill hill-c"></div>
-          <div class="favela-lights"></div>
-        </div>
 
         <header class="menu-header">
           <div class="brand">
@@ -84,7 +68,6 @@
         </header>
 
         <main class="menu-main">
-          <div class="lobby-label"><span class="lobby-pulse"></span> LOBBY PRINCIPAL <i></i> GHOSTCITY ONLINE</div>
           <section class="hero-copy">
             <p class="kicker"><span></span> TEMPORADA 01 · MARÉ DE HISTÓRIAS</p>
             <h1 class="hero-title">RED<em>RP</em></h1>

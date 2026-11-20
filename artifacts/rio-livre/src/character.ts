@@ -423,6 +423,7 @@ export class CharacterModel {
 
   private glb: GlbRig | null = null;
   private disposed = false;
+  private modelOn = true;
   private hips: THREE.Group;
   private chest: THREE.Group;
   private headRig: THREE.Group;
@@ -557,9 +558,21 @@ export class CharacterModel {
       rig.setColors(this.colors);
       rig.setShadows(!(this.contact && this.contact.visible));
       this.group.add(rig.root);
-      this.hips.visible = false;
+      rig.root.visible = this.modelOn;
+      this.hips.visible = !this.modelOn;
       this.glb = rig;
     });
+  }
+
+  get hasModel() {
+    return this.glb !== null && this.modelOn;
+  }
+
+  setModelEnabled(on: boolean) {
+    this.modelOn = on;
+    if (!this.glb) return;
+    this.glb.root.visible = on;
+    this.hips.visible = !on;
   }
 
   // -------------------------------------------------------------------------------------------
@@ -918,7 +931,7 @@ export class CharacterModel {
       this.contactMat.opacity = 0.34 * k;
     }
     if (this.label) this.label.position.y = LABEL_Y;
-    this.glb?.update(dt, this.speedForAnim, grounded);
+    if (this.modelOn) this.glb?.update(dt, this.speedForAnim, grounded);
   }
 
   dispose() {

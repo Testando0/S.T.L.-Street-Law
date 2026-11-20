@@ -680,11 +680,14 @@ export class World {
     this.buildGhostCityGate();
     this.buildClouds();
     this.buildOcean();
-    // Um lote único da cidade inteira derrota o culling e força a GPU a
-    // percorrer prédios que estão muito além da câmera, especialmente no low.
-    this.mergeStaticGroup(this.buildingGroup, this.mergeCell);
-    this.mergeStaticGroup(this.propGroup, this.quality === "low" ? this.mergeCell : this.mergeCell * 2);
-    this.mergeStaticGroup(this.scene, this.quality === "low" ? this.mergeCell : this.mergeCell * 2);
+    if (this.mergeCell >= 4000) {
+      // Preset leve: junta tudo em poucas malhas (menos draw calls por frame).
+      this.mergeStaticGroup(this.scene, 4000);
+    } else {
+      this.mergeStaticGroup(this.buildingGroup);
+      this.mergeStaticGroup(this.propGroup);
+      this.mergeStaticGroup(this.scene, this.mergeCell * 2);
+    }
   }
 
   private mergeStaticGroup(group: THREE.Object3D, cellSize = this.mergeCell) {
@@ -1098,12 +1101,6 @@ export class World {
   }
 
   private buildBlockBuildings(cx: number, cz: number, i: number, j: number) {
-    if (this.quality === "low") {
-      const seed = i * 6 + j;
-      this.addBuilding(cx - 8.5, cz, this.rng.range(15.5, 19), this.rng.range(14, 17), this.rng.range(3.6, 4.3), seed, "south");
-      this.addBuilding(cx + 8.5, cz, this.rng.range(14, 18), this.rng.range(14, 17), this.rng.range(3.4, 4.1), seed + 3, "north");
-      return;
-    }
     const cells = [
       [-8.5, -8.5],
       [8.5, -8.5],
@@ -1174,9 +1171,7 @@ export class World {
       this.addAwningBrackets(awn.position.x, height - 0.32, z + frontSign * (d / 2), frontSign, w * 0.56, 1.5);
     }
 
-    const top = this.quality === "low"
-      ? this.addLowUpperVolume(x, z, w, d, height, mat)
-      : this.addUpperFloors(x, z, w, d, height, facadeIndex, facing ? facing : "south", wide);
+    const top = this.addUpperFloors(x, z, w, d, height, facadeIndex, facing ? facing : "south", wide);
 
     const cap = new THREE.Mesh(new THREE.BoxGeometry(w + 0.35, 0.2, d + 0.35), this.trimMaterial);
     cap.position.set(x, top + 0.08, z);
@@ -1186,7 +1181,7 @@ export class World {
     inner.position.set(x, top + 0.16, z);
     inner.receiveShadow = true;
     this.buildingGroup.add(inner);
-    if (this.quality !== "low") this.addRoofDetails(x, z, w, d, top, facadeIndex);
+    this.addRoofDetails(x, z, w, d, top, facadeIndex);
 
     this.addCollider(x, z, w, d, top);
     for (const id of shopIds) this.shopColliders.set(id, this.colliders.length - 1);
@@ -1198,22 +1193,6 @@ export class World {
       h: top,
       color: "#aab4ac",
     });
-  }
-
-  private addLowUpperVolume(
-    x: number,
-    z: number,
-    w: number,
-    d: number,
-    baseH: number,
-    material: THREE.Material,
-  ) {
-    const h = 3.1;
-    const upper = new THREE.Mesh(new THREE.BoxGeometry(w - 0.42, h, d - 0.42), material);
-    upper.position.set(x, baseH + h / 2 + 0.1, z);
-    upper.receiveShadow = true;
-    this.buildingGroup.add(upper);
-    return baseH + h + 0.1;
   }
 
   private addUpperFloors(
@@ -2057,7 +2036,7 @@ export class World {
       this.buildingGroup.add(windowMesh);
     }
 
-    if (this.quality !== "low") this.buildHouseInterior(spec);
+    this.buildHouseInterior(spec);
 
     this.mapData.landmarks.push({
       x: spec.x,
@@ -2488,8 +2467,7 @@ export class World {
     this.buildingGroup.add(sign);
 
     const colors = ["#e76f51", "#f4a261", "#e9c46a", "#2a9d8f", "#5aa9e6", "#f28482", "#ffb703", "#8ecae6"];
-    const favelaCount = this.quality === "low" ? 34 : 72;
-    for (let i = 0; i < favelaCount; i++) {
+    for (let i = 0; i < 72; i++) {
       const x = this.rng.range(-238, -165);
       const z = this.rng.range(-150, 165);
       const w = this.rng.range(3.2, 7.2);
@@ -2512,7 +2490,6 @@ export class World {
       this.buildingGroup.add(house);
       this.addCollider(x, z, w, d, h);
       this.mapData.buildings.push({ x, z, w, d, h, color: "#c7684b" });
-      if (this.quality === "low") continue;
       const roof = new THREE.Mesh(
         new THREE.BoxGeometry(w + 0.4, 0.25, d + 0.4),
         new THREE.MeshStandardMaterial({ color: this.rng.chance(0.4) ? "#343b3e" : "#b9b1a1" }),
@@ -2684,8 +2661,7 @@ export class World {
     }
 
     const umbrellaColors = ["#e94f37", "#f6c945", "#2a9d8f", "#f4f1e8", "#5aa9e6"];
-    const umbrellaCount = this.quality === "low" ? 12 : 26;
-    for (let i = 0; i < umbrellaCount; i++) {
+    for (let i = 0; i < 26; i++) {
       const x = this.rng.range(196, 224);
       const z = this.rng.range(-210, 210);
       const color = this.rng.pick(umbrellaColors);
@@ -2702,7 +2678,7 @@ export class World {
       umbrella.position.set(x, 2.8, z);
       umbrella.castShadow = true;
       this.propGroup.add(umbrella);
-      if (this.quality !== "low" && this.rng.chance(0.65)) {
+      if (this.rng.chance(0.65)) {
         const towel = new THREE.Mesh(
           new THREE.PlaneGeometry(1.6, 2.7),
           new THREE.MeshStandardMaterial({ color: this.rng.pick(umbrellaColors), roughness: 0.8 }),
@@ -2778,10 +2754,9 @@ export class World {
       pool.position.set(x, 0.065, z);
       this.propGroup.add(pool);
     };
-    const lampSamples = this.quality === "low" ? [-1, 1] : [-2, -1, 0, 1, 2];
     for (let i = 0; i < ROAD_LINES.length; i++) {
       const line = ROAD_LINES[i]!;
-      for (const k of lampSamples) {
+      for (let k = -2; k <= 2; k++) {
         const x = line;
         const z = k * 52 + 16;
         const pole = new THREE.Mesh(poleGeo, poleMat);
@@ -2797,7 +2772,7 @@ export class World {
         addGlow(x + 5.5, z, 5.55);
         this.addCollider(x + 6.7, z, 0.5, 0.5, 5.8);
       }
-      for (const k of lampSamples) {
+      for (let k = -2; k <= 2; k++) {
         const x = k * 52 + 16;
         const z = line;
         const pole = new THREE.Mesh(poleGeo, poleMat);
@@ -3307,8 +3282,7 @@ export class World {
 
   private buildClouds() {
     const tex = makeCloudTexture();
-    const cloudCount = this.quality === "low" ? 8 : 18;
-    for (let i = 0; i < cloudCount; i++) {
+    for (let i = 0; i < 18; i++) {
       const opacity = this.rng.range(0.2, 0.5);
       const sprite = new THREE.Sprite(
         new THREE.SpriteMaterial({
@@ -3352,7 +3326,7 @@ export class World {
   }
 
   private buildOcean() {
-    const geo = new THREE.PlaneGeometry(430, 590, this.quality === "low" ? 12 : 72, this.quality === "low" ? 8 : 60);
+    const geo = new THREE.PlaneGeometry(430, 590, 72, 60);
     geo.rotateX(-Math.PI / 2);
     this.waterNormal = makeWaterNormalTexture();
     this.oceanMaterial = this.makeOceanMaterial();
@@ -3361,20 +3335,17 @@ export class World {
     this.ocean = ocean;
     this.scene.add(ocean);
 
-    const shallowMaterial = this.quality === "low"
-      ? new THREE.MeshStandardMaterial({ color: "#55bea8", roughness: 0.35, metalness: 0.02 })
-      : new THREE.MeshPhysicalMaterial({
-          color: "#55bea8",
-          roughness: 0.1,
-          metalness: 0.05,
-          clearcoat: 1,
-          transparent: true,
-          opacity: 0.55,
-          envMapIntensity: 1.2,
-        });
     const shallow = new THREE.Mesh(
       new THREE.PlaneGeometry(18, 500),
-      shallowMaterial,
+      new THREE.MeshPhysicalMaterial({
+        color: "#55bea8",
+        roughness: 0.1,
+        metalness: 0.05,
+        clearcoat: 1,
+        transparent: true,
+        opacity: 0.55,
+        envMapIntensity: 1.2,
+      }),
     );
     shallow.rotation.x = -Math.PI / 2;
     shallow.position.set(232, -0.55, 0);

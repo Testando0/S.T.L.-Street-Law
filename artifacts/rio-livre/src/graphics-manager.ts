@@ -77,20 +77,51 @@ export class GraphicsManager {
 
     if (scene) {
       if (scene.fog instanceof THREE.Fog) {
-        scene.fog.color.set(preset.fogColor);
-        scene.fog.near = preset.fogStart;
-        scene.fog.far = preset.fogEnd;
+        scene.fog.color.set("#8CB5D6");
+        scene.fog.near = 40;
+        scene.fog.far = 100;
       } else if ((THREE as any).FogExp2) {
-        scene.fog = new (THREE as any).FogExp2(preset.fogColor, 0.012);
+        scene.fog = new (THREE as any).FogExp2("#8CB5D6", 0.012);
       } else {
-        scene.fog = new THREE.Fog(preset.fogColor, preset.fogStart, preset.fogEnd);
+        scene.fog = new THREE.Fog("#8CB5D6", 40, 100);
       }
       if (renderer) {
-        renderer.setClearColor(preset.fogColor);
+        renderer.setClearColor("#8CB5D6");
       }
     }
 
-    return this.toPresetData(preset);
+    return this.toPresetData({
+      ...preset,
+      shadows: false,
+      shadowSize: 256,
+      shadowQuality: "off",
+      fogStart: 40,
+      fogEnd: 100,
+      fogColor: "#8CB5D6",
+      drawDistance: 90,
+      cullingDistance: 90,
+      maxCars: 4,
+      traffic: 4,
+      maxNPCs: 6,
+      people: 6,
+      renderScale: 0.85,
+      pixelRatio: 1,
+      antialias: false,
+      post: false,
+      ao: false,
+      bloom: false,
+      motionBlur: false,
+      reflexos: false,
+      grama: false,
+      tremor: false,
+      oceanPhysical: false,
+      rain: false,
+      maxLights: 0,
+      useBlobShadows: false,
+      useAtlasMaterials: true,
+      useObjectPooling: true,
+      disableSSAO: true,
+    } as QualityPreset);
   }
 
   getPreset(quality: QualityName): QualityPreset {

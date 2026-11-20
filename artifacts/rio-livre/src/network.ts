@@ -269,7 +269,7 @@ export class RemotePlayers {
 
   add(data: RemotePlayerData) {
     if (this.avatars.has(data.id)) return;
-    const character = new CharacterModel(data.skin, data.shirt, data.pants, data.hair, data.name, { tattoos: true, model: true });
+    const character = new CharacterModel(data.skin, data.shirt, data.pants, data.hair, data.name, { tattoos: true });
     character.group.position.set(data.x, 0, data.z);
     character.group.rotation.y = data.ry;
     this.scene.add(character.group);

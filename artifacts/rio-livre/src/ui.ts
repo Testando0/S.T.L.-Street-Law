@@ -71,6 +71,7 @@ export interface RemoteDot {
 
 export interface UICallbacks {
   onPlay: (online: boolean) => void;
+  onCoverEnter: () => void;
   onModalOpen: (name: string) => void;
   onModalClose: (name: string) => void;
   onMissionTrack: (id: string) => void;
@@ -358,7 +359,6 @@ export class UIManager {
   callbacks: UICallbacks;
   minimap = new MiniMapRenderer();
   currentModal: string | null = null;
-  private openingTimer: number | null = null;
   private loadingValue = 0;
   private currentMarkers: MapMarker[] = [];
   private currentRemotes: RemoteDot[] = [];
@@ -451,10 +451,9 @@ export class UIManager {
   }
 
   private bind() {
+    q("#cover")?.addEventListener("click", () => this.enterFromCover());
     q("#btn-play")?.addEventListener("click", () => this.callbacks.onPlay(false));
     q("#btn-online")?.addEventListener("click", () => this.callbacks.onPlay(true));
-    q("#btn-enter-lobby")?.addEventListener("click", () => this.enterLobby());
-    q("#btn-skip-opening")?.addEventListener("click", () => this.enterLobby());
     q("#btn-menu-settings")?.addEventListener("click", () => this.openModal("settings"));
     q("#btn-footer-settings")?.addEventListener("click", () => this.openModal("settings"));
     q("#btn-menu-help")?.addEventListener("click", () => this.openModal("help"));
@@ -726,27 +725,22 @@ export class UIManager {
     this.setLoading(100, "A cidade está pronta.");
     setTimeout(() => {
       q("#loading-screen")?.classList.add("fade-out");
-      q("#opening-screen")?.classList.remove("hidden");
-      this.openingTimer = window.setTimeout(() => this.enterLobby(), 7200);
+      q("#cover")?.classList.remove("hidden");
     }, 420);
   }
 
-  private enterLobby() {
-    if (this.openingTimer !== null) {
-      window.clearTimeout(this.openingTimer);
-      this.openingTimer = null;
-    }
-    q("#opening-screen")?.classList.add("opening-out");
-    window.setTimeout(() => {
-      q("#opening-screen")?.classList.add("hidden");
-      q("#opening-screen")?.classList.remove("opening-out");
-      q("#menu")?.classList.remove("hidden");
-    }, 520);
+  enterFromCover() {
+    const cover = q("#cover");
+    if (!cover || cover.classList.contains("leaving")) return;
+    cover.classList.add("leaving");
+    q("#menu")?.classList.remove("hidden");
+    this.callbacks.onCoverEnter();
+    window.setTimeout(() => cover.classList.add("hidden"), 480);
   }
 
   showMenu() {
+    q("#cover")?.classList.add("hidden");
     document.body.classList.remove("playing");
-    q("#opening-screen")?.classList.add("hidden");
     q("#menu")?.classList.remove("hidden");
     q("#hud")?.classList.add("hidden");
     q("#pause-modal")?.classList.add("hidden");
