@@ -9,6 +9,12 @@ const canvas = (w: number, h: number) => {
   return { c, ctx: c.getContext("2d")! };
 };
 
+/** Modo leve: sem anisotropia e filtro bilinear entre mipmaps (a GPU do A14 sofre com trilinear + aniso 4x). */
+let lowTextures = false;
+export const setTextureQuality = (low: boolean) => {
+  lowTextures = low;
+};
+
 const asTexture = (
   c: HTMLCanvasElement,
   repeatX = 1,
@@ -20,9 +26,9 @@ const asTexture = (
   t.wrapS = THREE.RepeatWrapping;
   t.wrapT = THREE.RepeatWrapping;
   t.repeat.set(repeatX, repeatY);
-  t.anisotropy = 4;
+  t.anisotropy = lowTextures ? 1 : 4;
   t.magFilter = THREE.LinearFilter;
-  t.minFilter = THREE.LinearMipmapLinearFilter;
+  t.minFilter = lowTextures ? THREE.LinearMipmapNearestFilter : THREE.LinearMipmapLinearFilter;
   return t;
 };
 

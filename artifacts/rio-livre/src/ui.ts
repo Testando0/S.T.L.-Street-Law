@@ -950,8 +950,8 @@ export class UIManager {
     }
   }
 
-  setFps(fps: number) {
-    this.setText("#fps-counter", `${Math.round(fps)} FPS`);
+  setFps(fps: number, extra = "") {
+    this.setText("#fps-counter", `${Math.round(fps)} FPS${extra ? ` · ${extra}` : ""}`);
     this.setHidden("#fps-counter", !this.profile.settings.showFps);
   }
 
