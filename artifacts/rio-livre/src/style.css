@@ -687,3 +687,54 @@ input { color: var(--cream); }
 .phone-list-btn:hover { background: rgba(23,184,144,.32); }
 .phone-empty { padding: 16px 12px; border-radius: 10px; background: rgba(255,255,255,.035); border: 1px dashed rgba(255,255,255,.09); font-size: 8px; color: rgba(246,238,217,.4); text-align: center; }
 .phone-list-icon.house-icon { border-radius: 8px; }
+
+
+.opening-screen { z-index: 120; overflow: hidden; background: #04090e; opacity: 1; transition: opacity .52s ease, visibility .52s ease; }
+.opening-screen.opening-out { opacity: 0; visibility: hidden; pointer-events: none; }
+.opening-backdrop { position: absolute; inset: -4%; background: linear-gradient(90deg, rgba(2,8,15,.9) 0%, rgba(3,10,18,.48) 46%, rgba(2,8,15,.18) 100%), linear-gradient(0deg, rgba(2,8,15,.78), transparent 48%, rgba(2,8,15,.32)), var(--stl-cover) center / cover; transform: scale(1.06); animation: openingPush 8s ease-out both; }
+.opening-backdrop::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 75% 44%, rgba(255,122,91,.22), transparent 28%), linear-gradient(115deg, transparent 35%, rgba(86,220,203,.12) 50%, transparent 62%); mix-blend-mode: screen; }
+.opening-grain { position: absolute; inset: 0; opacity: .16; pointer-events: none; background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 4px), radial-gradient(circle at 18% 28%, rgba(255,255,255,.2) 0 1px, transparent 1.6px); background-size: auto, 7px 7px; mix-blend-mode: overlay; }
+.opening-topline { position: absolute; top: max(24px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; font-size: 9px; letter-spacing: .42em; color: rgba(246,238,217,.6); white-space: nowrap; animation: openingFade .8s .35s both; }
+.opening-topline span { display: block; width: 34px; height: 1px; background: rgba(255,210,223,.65); }
+.opening-copy { position: absolute; left: clamp(28px, 10vw, 150px); top: 50%; transform: translateY(-50%); animation: openingCopyIn 1s .25s both; }
+.opening-kicker { margin: 0 0 18px; color: var(--sun); font-size: 10px; letter-spacing: .32em; }
+.opening-copy h1 { margin: 0; font-family: var(--display); font-size: clamp(84px, 14vw, 220px); line-height: .72; letter-spacing: .03em; color: #f8f0dc; text-shadow: 0 12px 0 rgba(0,0,0,.22), 0 28px 70px rgba(0,0,0,.55); }
+.opening-copy h1 em { color: var(--orange); font-style: normal; font-size: .42em; vertical-align: top; margin-left: .1em; }
+.opening-title { margin: 20px 0 0 8px; font-family: var(--display); font-size: clamp(18px, 2.2vw, 32px); letter-spacing: .38em; color: var(--sun); }
+.opening-subtitle { margin: 14px 0 0 9px; font-size: clamp(12px, 1.2vw, 17px); letter-spacing: .08em; color: rgba(246,238,217,.72); }
+.opening-bottom { position: absolute; left: clamp(28px, 10vw, 150px); right: clamp(28px, 10vw, 150px); bottom: max(30px, env(safe-area-inset-bottom)); animation: openingFade .8s .75s both; }
+.opening-progress { width: min(520px, 54vw); height: 2px; background: rgba(246,238,217,.18); overflow: hidden; }
+.opening-progress span { display: block; width: 100%; height: 100%; transform-origin: left; background: linear-gradient(90deg, var(--orange), var(--sun)); animation: openingProgress 7.2s linear both; box-shadow: 0 0 16px rgba(242,95,131,.8); }
+.opening-meta { display: flex; justify-content: space-between; width: min(520px, 54vw); margin-top: 10px; font-size: 8px; letter-spacing: .16em; color: rgba(246,238,217,.45); }
+.opening-meta b { color: var(--sun); font-weight: 500; }
+.opening-skip { position: absolute; right: 0; bottom: 0; padding: 9px 0 9px 16px; background: transparent; color: rgba(246,238,217,.62); font-size: 8px; letter-spacing: .14em; }
+.opening-skip span { font-size: 18px; vertical-align: -2px; color: var(--sun); }
+.opening-enter { position: absolute; right: clamp(28px, 9vw, 138px); bottom: 25%; padding: 14px 18px; border: 1px solid rgba(246,238,217,.25); border-radius: 999px; background: rgba(4,15,20,.48); backdrop-filter: blur(14px); color: var(--cream); font-size: 10px; letter-spacing: .18em; animation: openingFade .8s 1.1s both, enterPulse 2.6s 2s ease-in-out infinite; }
+.opening-enter span { margin-left: 10px; color: var(--sun); font-size: 18px; vertical-align: -2px; }
+.opening-enter:hover, .opening-skip:hover { color: var(--sun); }
+@keyframes openingPush { from { transform: scale(1.12); filter: saturate(.72) brightness(.72); } to { transform: scale(1.02); filter: saturate(1.05) brightness(1); } }
+@keyframes openingCopyIn { from { opacity: 0; transform: translate(-28px, -50%); } to { opacity: 1; transform: translate(0, -50%); } }
+@keyframes openingFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes openingProgress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes enterPulse { 50% { box-shadow: 0 0 0 7px rgba(255,210,223,.04), 0 0 28px rgba(242,95,131,.22); } }
+.menu-screen { background: linear-gradient(90deg, rgba(3,16,18,.9) 0%, rgba(3,16,18,.62) 43%, rgba(3,16,18,.2) 100%), linear-gradient(0deg, rgba(3,16,18,.92), transparent 45%), var(--stl-cover) center / cover; }
+.lobby-label { position: absolute; top: 9px; left: 8vw; display: flex; align-items: center; gap: 7px; font-size: 8px; letter-spacing: .18em; color: rgba(246,238,217,.48); animation: riseIn .7s .2s both; }
+.lobby-label i { width: 3px; height: 3px; border-radius: 50%; background: rgba(246,238,217,.3); margin: 0 4px; }
+.lobby-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 0 4px rgba(23,184,144,.1), 0 0 14px rgba(23,184,144,.6); }
+@media (max-width: 720px) {
+  .opening-topline { font-size: 7px; letter-spacing: .22em; gap: 8px; }
+  .opening-topline span { width: 18px; }
+  .opening-backdrop { background-position: 62% center; }
+  .opening-copy { top: 43%; left: 24px; }
+  .opening-copy h1 { font-size: clamp(76px, 25vw, 140px); }
+  .opening-title { font-size: 16px; letter-spacing: .25em; }
+  .opening-subtitle { font-size: 11px; }
+  .opening-bottom { left: 24px; right: 24px; bottom: 24px; }
+  .opening-progress, .opening-meta { width: 100%; }
+  .opening-meta { font-size: 6px; }
+  .opening-meta span { max-width: 54%; }
+  .opening-enter { right: 24px; bottom: 31%; font-size: 8px; padding: 11px 13px; }
+  .opening-skip { right: 0; bottom: -3px; font-size: 7px; }
+  .lobby-label { top: -5px; left: 22px; font-size: 7px; }
+  .menu-screen { background-position: 62% center; }
+}
